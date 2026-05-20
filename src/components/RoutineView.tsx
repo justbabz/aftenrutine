@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "../state/AppContext";
 import { RoutineSlot } from "../data/types";
-import { SLOT_META, themeFor } from "../styles/theme";
+import { SLOT_META, greetingFor, themeFor } from "../styles/theme";
 import { ChecklistGrid } from "./ChecklistGrid";
 import { CelebrationOverlay } from "./CelebrationOverlay";
 
@@ -99,10 +99,10 @@ export function RoutineView({ profileId, slot }: RoutineViewProps) {
         <div className="flex flex-col items-center text-center pt-2">
           <div className="text-7xl sm:text-8xl mb-2 drop-shadow-sm leading-none" aria-hidden>{p.avatar.emoji}</div>
           <h1 className="text-4xl font-black leading-tight drop-shadow-sm">{p.name}</h1>
-          <p className="text-white/90 text-lg mt-1">{meta.subtitle}</p>
+          <p className="text-white/90 text-lg mt-1">{greetingFor()}</p>
         </div>
 
-        <div className="mt-5 bg-white/15 backdrop-blur p-1.5 rounded-3xl flex gap-1.5 w-full max-w-sm">
+        <div className="mt-4 sm:mt-5 bg-white/15 backdrop-blur p-1 sm:p-1.5 rounded-2xl sm:rounded-3xl flex gap-1 sm:gap-1.5 w-full max-w-sm">
           <SlotTab label="Morgen" icon="🌅" active={slot === "morning"} onClick={() => switchSlot("morning")} />
           <SlotTab label="Aften" icon="🌙" active={slot === "evening"} onClick={() => switchSlot("evening")} />
         </div>
@@ -134,10 +134,10 @@ function SlotTab({ label, icon, active, onClick }: { label: string; icon: string
     <button
       onClick={onClick}
       aria-pressed={active}
-      className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-xl transition-all duration-200 active:scale-[0.97]
+      className={`flex-1 flex items-center justify-center gap-2 sm:gap-3 py-2 sm:py-4 rounded-xl sm:rounded-2xl font-black text-base sm:text-xl transition-all duration-200 active:scale-[0.97]
         ${active ? "bg-white text-ink-900 shadow-lift" : "text-white/90 hover:bg-white/10"}`}
     >
-      <span className="text-3xl" aria-hidden>{icon}</span>
+      <span className="text-xl sm:text-3xl" aria-hidden>{icon}</span>
       <span>{label}</span>
     </button>
   );
