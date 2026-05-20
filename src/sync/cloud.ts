@@ -9,7 +9,7 @@ const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | un
 export const cloudConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 let client: SupabaseClient | null = null;
-function getClient(): SupabaseClient {
+export function getClient(): SupabaseClient {
   if (!client) {
     if (!cloudConfigured) throw new Error("Cloud sync not configured");
     client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
