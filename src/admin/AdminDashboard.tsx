@@ -1,14 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  AdminAuthError,
   AdminFamilyRow,
-  cloudConfigured,
+  adminConfigured,
+  clearPassword,
   deleteFamily,
   listAllFamilies,
-  subscribeAllFamilies,
 } from "./adminCloud";
 import { formatFamilyId } from "../sync/cloud";
 import { Profile } from "../data/types";
 import { themeFor } from "../styles/theme";
+
+const REFRESH_INTERVAL_MS = 30_000;
 
 type LoadState =
   | { kind: "loading" }
@@ -104,38 +107,37 @@ export function AdminDashboard({ onLock }: { onLock: () => void }) {
   const [query, setQuery] = useState("");
   const [onlyRecent, setOnlyRecent] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    if (!cloudConfigured) {
+  const refresh = useCallback(async () => {
+    if (!adminConfigured) {
       setState({ kind: "error", message: "Supabase er ikke konfigureret (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY mangler)." });
       return;
     }
-    let cancelled = false;
-    listAllFamilies()
-      .then((rows) => { if (!cancelled) setState({ kind: "ready", rows }); })
-      .catch((e: unknown) => {
-        if (cancelled) return;
-        setState({ kind: "error", message: e instanceof Error ? e.message : "Ukendt fejl" });
-      });
-    return () => { cancelled = true; };
-  }, []);
+    setRefreshing(true);
+    try {
+      const rows = await listAllFamilies();
+      setState({ kind: "ready", rows });
+      setLastRefreshed(new Date());
+    } catch (e) {
+      if (e instanceof AdminAuthError) {
+        clearPassword();
+        onLock();
+        return;
+      }
+      setState({ kind: "error", message: e instanceof Error ? e.message : "Ukendt fejl" });
+    } finally {
+      setRefreshing(false);
+    }
+  }, [onLock]);
+
+  useEffect(() => { void refresh(); }, [refresh]);
 
   useEffect(() => {
-    if (state.kind !== "ready") return;
-    const sub = subscribeAllFamilies((event) => {
-      setState((prev) => {
-        if (prev.kind !== "ready") return prev;
-        if (event.kind === "delete") {
-          return { kind: "ready", rows: prev.rows.filter((r) => r.id !== event.oldId) };
-        }
-        if (!event.row) return prev;
-        const without = prev.rows.filter((r) => r.id !== event.row!.id);
-        const next = [event.row, ...without].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-        return { kind: "ready", rows: next };
-      });
-    });
-    return () => sub.unsubscribe();
-  }, [state.kind]);
+    const id = window.setInterval(() => { void refresh(); }, REFRESH_INTERVAL_MS);
+    return () => window.clearInterval(id);
+  }, [refresh]);
 
   const rows = state.kind === "ready" ? state.rows : [];
 
@@ -162,12 +164,23 @@ export function AdminDashboard({ onLock }: { onLock: () => void }) {
 
   return (
     <div className="min-h-dvh bg-cream-50 pt-safe pb-safe">
-      <header className="bg-white border-b border-ink-100 px-6 py-4 flex items-center justify-between">
+      <header className="bg-white border-b border-ink-100 px-6 py-4 flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-black text-ink-900">Familierutine · Global admin</h1>
-          <p className="text-sm text-ink-500">Live oversigt over alle familier</p>
+          <p className="text-sm text-ink-500">
+            {lastRefreshed
+              ? `Opdateret ${lastRefreshed.toLocaleTimeString("da-DK")} · auto hver 30s`
+              : "Henter…"}
+          </p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={() => void refresh()}
+            disabled={refreshing}
+            className="bg-ink-100 text-ink-700 font-bold px-4 py-2 rounded-2xl active:scale-95 transition-transform disabled:opacity-50"
+          >
+            {refreshing ? "Henter…" : "Opdater"}
+          </button>
           <button
             onClick={() => exportJson(rows)}
             disabled={rows.length === 0}

@@ -1,21 +1,17 @@
 import { useState } from "react";
 import { AdminGate } from "./AdminGate";
 import { AdminDashboard } from "./AdminDashboard";
-
-const UNLOCK_KEY = "familierutine-admin-unlocked";
+import { clearPassword, getStoredPassword } from "./adminCloud";
 
 export function AdminApp() {
-  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem(UNLOCK_KEY) === "1");
+  const [unlocked, setUnlocked] = useState(() => getStoredPassword().length > 0);
 
   if (!unlocked) {
-    return <AdminGate onUnlock={() => {
-      sessionStorage.setItem(UNLOCK_KEY, "1");
-      setUnlocked(true);
-    }} />;
+    return <AdminGate onUnlock={() => setUnlocked(true)} />;
   }
 
   return <AdminDashboard onLock={() => {
-    sessionStorage.removeItem(UNLOCK_KEY);
+    clearPassword();
     setUnlocked(false);
   }} />;
 }

@@ -1,7 +1,24 @@
-import { cloudConfigured, getClient } from "../sync/cloud";
 import type { SyncPayload } from "../sync/cloud";
 
-export { cloudConfigured };
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
+const ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ?? "";
+const ADMIN_API_URL = SUPABASE_URL ? `${SUPABASE_URL.replace(/\/+$/, "")}/functions/v1/admin-api` : "";
+
+export const adminConfigured = Boolean(SUPABASE_URL && ANON_KEY);
+
+const PW_KEY = "familierutine-admin-pw";
+
+export function getStoredPassword(): string {
+  return sessionStorage.getItem(PW_KEY) ?? "";
+}
+
+export function storePassword(pw: string): void {
+  sessionStorage.setItem(PW_KEY, pw);
+}
+
+export function clearPassword(): void {
+  sessionStorage.removeItem(PW_KEY);
+}
 
 export interface AdminFamilyRow {
   id: string;
@@ -29,61 +46,40 @@ function toRow(raw: RawRow): AdminFamilyRow {
   };
 }
 
+export class AdminAuthError extends Error {
+  constructor(message = "unauthorized") { super(message); this.name = "AdminAuthError"; }
+}
+
+async function call<T>(action: string, password: string, body?: object): Promise<T> {
+  if (!adminConfigured) throw new Error("Supabase env mangler");
+  const res = await fetch(`${ADMIN_API_URL}?action=${encodeURIComponent(action)}`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-admin-password": password,
+      "authorization": `Bearer ${ANON_KEY}`,
+      "apikey": ANON_KEY,
+    },
+    body: body ? JSON.stringify(body) : "{}",
+  });
+  if (res.status === 401) throw new AdminAuthError();
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try { const j = await res.json(); if (j?.error) msg = j.error; } catch { /* ignore */ }
+    throw new Error(msg);
+  }
+  return (await res.json()) as T;
+}
+
+export async function verifyPassword(password: string): Promise<void> {
+  await call<{ rows: RawRow[] }>("list", password);
+}
+
 export async function listAllFamilies(): Promise<AdminFamilyRow[]> {
-  const supabase = getClient();
-  const { data, error } = await supabase
-    .from("families")
-    .select("id, payload, last_device, created_at, updated_at")
-    .order("updated_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map((r) => toRow(r as RawRow));
+  const { rows } = await call<{ rows: RawRow[] }>("list", getStoredPassword());
+  return rows.map(toRow);
 }
 
 export async function deleteFamily(id: string): Promise<void> {
-  const supabase = getClient();
-  const { error } = await supabase.from("families").delete().eq("id", id);
-  if (error) throw error;
-}
-
-export interface AdminSubscription {
-  unsubscribe: () => void;
-}
-
-export type ChangeKind = "insert" | "update" | "delete";
-
-export interface ChangeEvent {
-  kind: ChangeKind;
-  row: AdminFamilyRow | null;
-  oldId: string | null;
-}
-
-export function subscribeAllFamilies(onChange: (event: ChangeEvent) => void): AdminSubscription {
-  const supabase = getClient();
-  const channel = supabase
-    .channel("admin:families")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "families" },
-      (payload) => {
-        const eventType = payload.eventType as "INSERT" | "UPDATE" | "DELETE";
-        if (eventType === "DELETE") {
-          const old = payload.old as { id?: string } | null;
-          onChange({ kind: "delete", row: null, oldId: old?.id ?? null });
-          return;
-        }
-        const next = payload.new as RawRow | null;
-        if (!next) return;
-        onChange({
-          kind: eventType === "INSERT" ? "insert" : "update",
-          row: toRow(next),
-          oldId: null,
-        });
-      },
-    )
-    .subscribe();
-  return {
-    unsubscribe: () => {
-      supabase.removeChannel(channel);
-    },
-  };
+  await call<{ ok: true }>("delete", getStoredPassword(), { id });
 }

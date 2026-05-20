@@ -1,37 +1,27 @@
 import { useState } from "react";
-
-const EXPECTED_HASH = (import.meta.env.VITE_GLOBAL_ADMIN_PASSWORD_HASH ?? "").toLowerCase();
-
-function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-async function sha256Hex(input: string): Promise<string> {
-  const data = new TextEncoder().encode(input);
-  const digest = await crypto.subtle.digest("SHA-256", data);
-  return bytesToHex(new Uint8Array(digest));
-}
+import { adminConfigured, AdminAuthError, storePassword, verifyPassword } from "./adminCloud";
 
 export function AdminGate({ onUnlock }: { onUnlock: () => void }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const configured = EXPECTED_HASH.length === 64;
-
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!configured || busy) return;
+    if (busy || !password) return;
     setBusy(true);
     setError(null);
     try {
-      const hash = await sha256Hex(password);
-      if (hash === EXPECTED_HASH) {
-        onUnlock();
-      } else {
+      await verifyPassword(password);
+      storePassword(password);
+      onUnlock();
+    } catch (e) {
+      if (e instanceof AdminAuthError) {
         setError("Forkert kode");
-        setPassword("");
+      } else {
+        setError(e instanceof Error ? e.message : "Ukendt fejl");
       }
+      setPassword("");
     } finally {
       setBusy(false);
     }
@@ -46,9 +36,9 @@ export function AdminGate({ onUnlock }: { onUnlock: () => void }) {
           <p className="text-sm text-ink-500 mt-1">Kun for ejeren af appen</p>
         </header>
 
-        {!configured && (
+        {!adminConfigured && (
           <div className="bg-bad-soft text-bad-500 rounded-2xl p-3 text-sm">
-            VITE_GLOBAL_ADMIN_PASSWORD_HASH er ikke sat. Tilføj en SHA-256-hash af dit password i .env.
+            VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY mangler.
           </div>
         )}
 
@@ -59,7 +49,7 @@ export function AdminGate({ onUnlock }: { onUnlock: () => void }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoFocus
-            disabled={!configured || busy}
+            disabled={!adminConfigured || busy}
             className="bg-cream-100 border-2 border-ink-100 focus:border-brand-400 outline-none rounded-2xl px-4 py-3 text-ink-900 font-semibold transition-colors disabled:opacity-50"
           />
         </label>
@@ -68,7 +58,7 @@ export function AdminGate({ onUnlock }: { onUnlock: () => void }) {
 
         <button
           type="submit"
-          disabled={!configured || busy || !password}
+          disabled={!adminConfigured || busy || !password}
           className="bg-brand-600 text-white font-bold py-4 rounded-2xl shadow-lift active:scale-95 transition-transform disabled:bg-ink-200 disabled:text-ink-400 disabled:shadow-none"
         >
           {busy ? "Tjekker…" : "Lås op"}
