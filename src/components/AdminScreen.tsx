@@ -22,6 +22,11 @@ export function AdminScreen() {
             <p className="text-ink-500 text-sm mt-1">Tilføj børn og rediger deres rutiner</p>
           </header>
 
+          <section className="flex flex-col gap-2">
+            <h2 className="text-lg font-bold text-ink-700 px-1">Familie</h2>
+            <FamilyNameRow />
+          </section>
+
           <section className="flex flex-col gap-3">
             <h2 className="text-lg font-bold text-ink-700 px-1">Børn</h2>
             {config.profiles.length === 0 && (
@@ -62,6 +67,68 @@ export function AdminScreen() {
           </button>
         </div>
       </main>
+    </div>
+  );
+}
+
+function FamilyNameRow() {
+  const { config, setFamilyName, pushToast } = useApp();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(config.familyName ?? "");
+
+  if (!editing) {
+    const current = config.familyName?.trim();
+    return (
+      <button
+        onClick={() => { setValue(current ?? ""); setEditing(true); }}
+        className="bg-white rounded-3xl shadow-soft p-4 flex items-center justify-between text-left active:scale-[0.98] transition-transform"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-2xl bg-brand-100 flex items-center justify-center text-xl" aria-hidden>🏠</div>
+          <div className="min-w-0">
+            <div className="font-semibold text-ink-900 truncate">{current || "Giv familien et navn"}</div>
+            <div className="text-xs text-ink-500">{current ? "Tryk for at ændre" : "Valgfrit"}</div>
+          </div>
+        </div>
+        <svg viewBox="0 0 24 24" className="w-5 h-5 text-ink-300 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    );
+  }
+
+  const save = () => {
+    setFamilyName(value);
+    pushToast(value.trim() ? "Familie-navn gemt" : "Familie-navn fjernet");
+    setEditing(false);
+  };
+
+  return (
+    <div className="bg-white rounded-3xl shadow-soft p-5 flex flex-col gap-3 animate-fade-up">
+      <label className="flex flex-col gap-2">
+        <span className="text-sm font-semibold text-ink-700 px-1">Familie-navn <span className="text-ink-400 font-normal">(valgfrit)</span></span>
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="Fx Familien Hansen"
+          autoFocus
+          maxLength={40}
+          className="bg-cream-100 border-2 border-ink-100 focus:border-brand-400 outline-none rounded-2xl px-4 py-3 text-ink-900 placeholder:text-ink-300 font-semibold transition-colors"
+        />
+      </label>
+      <div className="flex gap-2">
+        <button
+          onClick={() => setEditing(false)}
+          className="flex-1 bg-ink-100 text-ink-700 font-bold py-3 rounded-2xl active:scale-95 transition-transform"
+        >
+          Fortryd
+        </button>
+        <button
+          onClick={save}
+          className="flex-1 bg-brand-600 text-white font-bold py-3 rounded-2xl active:scale-95 transition-transform"
+        >
+          Gem
+        </button>
+      </div>
     </div>
   );
 }

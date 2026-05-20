@@ -9,10 +9,11 @@ import { defaultDeviceName, normalizeFamilyId } from "../sync/cloud";
 type Stage = "welcome" | "choose" | "join" | "pin" | "child";
 
 export function SetupWizard() {
-  const { setPin, addProfile, replaceScreen, cloudAvailable, enableSyncWithExisting, pushToast } = useApp();
+  const { setPin, addProfile, replaceScreen, cloudAvailable, enableSyncWithExisting, pushToast, setFamilyName } = useApp();
   const [stage, setStage] = useState<Stage>("welcome");
 
   const [name, setName] = useState("");
+  const [familyName, setFamilyNameLocal] = useState("");
   const [avatar, setAvatar] = useState<string>(AVATAR_EMOJIS[0]);
   const [color, setColor] = useState<ProfileColor>("lilac");
 
@@ -27,6 +28,7 @@ export function SetupWizard() {
 
   const handleCreate = () => {
     if (!name.trim()) return;
+    if (familyName.trim()) setFamilyName(familyName);
     addProfile({ name: name.trim(), avatar: { arasaacId: null, emoji: avatar }, color });
     replaceScreen({ kind: "picker" });
   };
@@ -158,7 +160,19 @@ export function SetupWizard() {
             </div>
 
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-ink-700 px-1">Navn</span>
+              <span className="text-sm font-semibold text-ink-700 px-1">Familie-navn <span className="text-ink-400 font-normal">(valgfrit)</span></span>
+              <input
+                type="text"
+                value={familyName}
+                onChange={(e) => setFamilyNameLocal(e.target.value)}
+                placeholder="Fx Familien Hansen"
+                maxLength={40}
+                className="bg-white border-2 border-ink-100 focus:border-brand-400 outline-none rounded-2xl px-5 py-4 text-lg font-semibold text-ink-900 placeholder:text-ink-300 shadow-soft transition-colors"
+              />
+            </label>
+
+            <label className="flex flex-col gap-2">
+              <span className="text-sm font-semibold text-ink-700 px-1">Barnets navn</span>
               <input
                 type="text"
                 value={name}

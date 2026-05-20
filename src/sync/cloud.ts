@@ -85,10 +85,16 @@ export type SyncPayload = {
   profiles: Profile[];
   pin: AppConfig["pin"];
   checks?: ChecksState["entries"];
+  familyName?: string;
 };
 
 export function buildPayload(config: AppConfig, checks: ChecksState): SyncPayload {
-  return { profiles: config.profiles, pin: config.pin, checks: checks.entries };
+  return {
+    profiles: config.profiles,
+    pin: config.pin,
+    checks: checks.entries,
+    familyName: config.familyName,
+  };
 }
 
 export function payloadIntoConfig(payload: SyncPayload, current: AppConfig): AppConfig {
@@ -98,6 +104,7 @@ export function payloadIntoConfig(payload: SyncPayload, current: AppConfig): App
     pin: payload.pin ?? current.pin,
     failedAttempts: 0,
     lockedUntil: null,
+    familyName: payload.familyName,
   };
 }
 
