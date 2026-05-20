@@ -188,7 +188,7 @@ interface AppContextValue {
   updateProfile(profile: Profile): void;
   deleteProfile(profileId: string): void;
   setRoutineTasks(profileId: string, slot: RoutineSlot, weekday: Weekday, tasks: Task[]): void;
-  copyRoutineToAllDays(profileId: string, slot: RoutineSlot, sourceDay: Weekday): void;
+  copyRoutineToDays(profileId: string, slot: RoutineSlot, sourceDay: Weekday, targetDays: Weekday[]): void;
 
   pushToast(text: string, undo?: () => void): void;
   dismissToast(id: string): void;
@@ -374,7 +374,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, [writeConfig]);
 
-  const copyRoutineToAllDays = useCallback((profileId: string, slot: RoutineSlot, sourceDay: Weekday) => {
+  const copyRoutineToDays = useCallback((profileId: string, slot: RoutineSlot, sourceDay: Weekday, targetDays: Weekday[]) => {
+    if (targetDays.length === 0) return;
+    const targets = new Set(targetDays.filter((d) => d !== sourceDay));
     writeConfig((cfg) => ({
       ...cfg,
       profiles: cfg.profiles.map((p) => {
@@ -383,7 +385,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const cloneTasks = () => source.tasks.map((t) => ({ ...t }));
         const nextWeekly = {} as Record<Weekday, { tasks: Task[] }>;
         for (const day of WEEKDAYS) {
-          nextWeekly[day] = day === sourceDay ? source : { tasks: cloneTasks() };
+          nextWeekly[day] = targets.has(day) ? { tasks: cloneTasks() } : p.routines[slot][day];
         }
         return { ...p, routines: { ...p.routines, [slot]: nextWeekly } };
       }),
@@ -464,7 +466,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     updateProfile,
     deleteProfile,
     setRoutineTasks,
-    copyRoutineToAllDays,
+    copyRoutineToDays,
     pushToast,
     dismissToast,
     reportActivity,
@@ -477,7 +479,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     state.config, state.checks, state.screen, state.adminUnlocked, state.toasts, state.today,
     goto, goBack, replaceScreen, toggleTask, resetRoutine,
     setPin, tryUnlockAdmin, unlockAdmin, lockAdmin, resetEverything,
-    addProfile, updateProfile, deleteProfile, setRoutineTasks, copyRoutineToAllDays,
+    addProfile, updateProfile, deleteProfile, setRoutineTasks, copyRoutineToDays,
     pushToast, dismissToast, reportActivity,
     routineTasks, profile, isDone, countDone, todayWeekday,
   ]);

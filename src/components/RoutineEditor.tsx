@@ -11,10 +11,11 @@ interface RoutineEditorProps {
 }
 
 export function RoutineEditor({ profileId, slot, weekday }: RoutineEditorProps) {
-  const { profile, routineTasks, setRoutineTasks, copyRoutineToAllDays, goBack, goto, replaceScreen, pushToast } = useApp();
+  const { profile, routineTasks, setRoutineTasks, copyRoutineToDays, goBack, goto, replaceScreen, pushToast } = useApp();
   const p = profile(profileId);
   const tasks = routineTasks(profileId, slot, weekday);
   const [showCopy, setShowCopy] = useState(false);
+  const [copyTargets, setCopyTargets] = useState<Set<Weekday>>(new Set());
 
   if (!p) {
     return (
@@ -49,18 +50,46 @@ export function RoutineEditor({ profileId, slot, weekday }: RoutineEditorProps) 
   };
 
   const handleCopy = () => {
+    if (copyTargets.size === 0) return;
     const before = p.routines[slot];
-    copyRoutineToAllDays(profileId, slot, weekday);
+    const targets = Array.from(copyTargets);
+    copyRoutineToDays(profileId, slot, weekday, targets);
     setShowCopy(false);
+    setCopyTargets(new Set());
+    const label = targets.length === WEEKDAYS.length - 1
+      ? "alle andre dage"
+      : targets.length === 1
+        ? WEEKDAY_LABELS[targets[0]].full.toLowerCase()
+        : `${targets.length} dage`;
     pushToast(
-      `Kopieret til alle ugens dage`,
+      `Kopieret til ${label}`,
       () => {
-        // Restore original days
-        for (const day of WEEKDAYS) {
+        for (const day of targets) {
           setRoutineTasks(profileId, slot, day, before[day].tasks);
         }
       },
     );
+  };
+
+  const otherDays = WEEKDAYS.filter((d) => d !== weekday);
+  const allSelected = otherDays.every((d) => copyTargets.has(d));
+  const toggleTarget = (day: Weekday) => {
+    setCopyTargets((prev) => {
+      const next = new Set(prev);
+      if (next.has(day)) next.delete(day);
+      else next.add(day);
+      return next;
+    });
+  };
+  const toggleSelectAll = () => {
+    setCopyTargets((prev) => {
+      if (otherDays.every((d) => prev.has(d))) return new Set();
+      return new Set(otherDays);
+    });
+  };
+  const openCopy = () => {
+    setCopyTargets(new Set());
+    setShowCopy(true);
   };
 
   return (
@@ -101,10 +130,10 @@ export function RoutineEditor({ profileId, slot, weekday }: RoutineEditorProps) 
           <h2 className="text-lg font-bold text-ink-700">{WEEKDAY_LABELS[weekday].full}</h2>
           {tasks.length > 0 && (
             <button
-              onClick={() => setShowCopy(true)}
+              onClick={openCopy}
               className="text-sm font-bold text-brand-600 active:text-brand-800 underline-offset-4 underline"
             >
-              Kopier til alle dage
+              Kopier til...
             </button>
           )}
         </div>
@@ -151,24 +180,55 @@ export function RoutineEditor({ profileId, slot, weekday }: RoutineEditorProps) 
 
       {showCopy && (
         <div className="fixed inset-0 z-40 bg-ink-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-lift p-6 w-full max-w-sm flex flex-col gap-4 animate-fade-up">
-            <h3 className="text-xl font-black text-ink-900">Kopier {WEEKDAY_LABELS[weekday].full.toLowerCase()}s opgaver til alle dage?</h3>
-            <p className="text-ink-500 text-sm">
-              Andre dage får samme opgaver som {WEEKDAY_LABELS[weekday].full.toLowerCase()}.
-              Det her overskriver hvad de havde i forvejen — men du kan fortryde lige bagefter.
-            </p>
-            <div className="flex gap-2">
+          <div className="bg-white rounded-3xl shadow-lift p-6 w-full max-w-md flex flex-col gap-4 animate-fade-up">
+            <div>
+              <h3 className="text-xl font-black text-ink-900">Kopier {WEEKDAY_LABELS[weekday].full.toLowerCase()}s opgaver til...</h3>
+              <p className="text-ink-500 text-sm mt-1">
+                Vælg en eller flere dage. Det overskriver hvad dagene havde i forvejen — men du kan fortryde.
+              </p>
+            </div>
+
+            <button
+              onClick={toggleSelectAll}
+              className={`flex items-center justify-between rounded-2xl px-4 py-3 font-bold transition-colors
+                ${allSelected ? `${t.bg} text-white shadow-lift` : "bg-cream-100 text-ink-700"}`}
+            >
+              <span>Vælg alle dage</span>
+              <span aria-hidden>{allSelected ? "✓" : ""}</span>
+            </button>
+
+            <div className="grid grid-cols-2 gap-2">
+              {otherDays.map((day) => {
+                const selected = copyTargets.has(day);
+                const dayCount = p.routines[slot][day].tasks.length;
+                return (
+                  <button
+                    key={day}
+                    onClick={() => toggleTarget(day)}
+                    aria-pressed={selected}
+                    className={`flex items-center justify-between rounded-2xl px-4 py-3 transition-all active:scale-95
+                      ${selected ? `${t.bg} text-white shadow-lift` : "bg-white text-ink-700 shadow-soft"}`}
+                  >
+                    <span className="font-bold">{WEEKDAY_LABELS[day].full}</span>
+                    <span className={`text-xs font-bold ${selected ? "text-white/80" : "text-ink-400"}`}>{dayCount > 0 ? `${dayCount} →` : "tom"}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex gap-2 pt-2">
               <button
-                onClick={() => setShowCopy(false)}
+                onClick={() => { setShowCopy(false); setCopyTargets(new Set()); }}
                 className="flex-1 bg-ink-100 text-ink-700 font-bold py-3 rounded-2xl active:scale-95 transition-transform"
               >
                 Fortryd
               </button>
               <button
                 onClick={handleCopy}
-                className={`flex-1 ${t.bg} text-white font-bold py-3 rounded-2xl active:scale-95 transition-transform`}
+                disabled={copyTargets.size === 0}
+                className={`flex-1 ${t.bg} text-white font-bold py-3 rounded-2xl active:scale-95 transition-transform disabled:bg-ink-200 disabled:text-ink-400`}
               >
-                Kopier
+                Kopier {copyTargets.size > 0 ? `(${copyTargets.size})` : ""}
               </button>
             </div>
           </div>
