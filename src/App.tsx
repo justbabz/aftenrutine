@@ -26,9 +26,9 @@ function Router() {
     case "admin-profile":
       return <ProfileEditor profileId={screen.profileId as string} />;
     case "admin-routine":
-      return <RoutineEditor profileId={screen.profileId} slot={screen.slot} />;
+      return <RoutineEditor profileId={screen.profileId} slot={screen.slot} weekday={screen.weekday} />;
     case "admin-task":
-      return <TaskEditor profileId={screen.profileId} slot={screen.slot} taskId={screen.taskId} />;
+      return <TaskEditor profileId={screen.profileId} slot={screen.slot} weekday={screen.weekday} taskId={screen.taskId} />;
   }
 }
 

@@ -16,9 +16,13 @@ import {
   ProfileAvatar,
   RoutineSlot,
   Task,
+  Weekday,
+  WEEKDAYS,
   checksKey,
   emptyChecks,
   emptyConfig,
+  emptyWeeklyRoutine,
+  weekdayFromDate,
 } from "../data/types";
 import {
   computeLockedUntil,
@@ -40,8 +44,8 @@ export type Screen =
   | { kind: "admin-auth" }
   | { kind: "admin-home" }
   | { kind: "admin-profile"; profileId: string | "new" }
-  | { kind: "admin-routine"; profileId: string; slot: RoutineSlot }
-  | { kind: "admin-task"; profileId: string; slot: RoutineSlot; taskId: string | "new" };
+  | { kind: "admin-routine"; profileId: string; slot: RoutineSlot; weekday: Weekday }
+  | { kind: "admin-task"; profileId: string; slot: RoutineSlot; weekday: Weekday; taskId: string | "new" };
 
 export interface Toast {
   id: string;
@@ -183,17 +187,19 @@ interface AppContextValue {
   addProfile(input: { name: string; avatar: ProfileAvatar; color: ProfileColor }): Profile;
   updateProfile(profile: Profile): void;
   deleteProfile(profileId: string): void;
-  setRoutineTasks(profileId: string, slot: RoutineSlot, tasks: Task[]): void;
+  setRoutineTasks(profileId: string, slot: RoutineSlot, weekday: Weekday, tasks: Task[]): void;
+  copyRoutineToAllDays(profileId: string, slot: RoutineSlot, sourceDay: Weekday): void;
 
   pushToast(text: string, undo?: () => void): void;
   dismissToast(id: string): void;
 
   reportActivity(): void;
 
-  routineTasks(profileId: string, slot: RoutineSlot): Task[];
+  routineTasks(profileId: string, slot: RoutineSlot, weekday?: Weekday): Task[];
   profile(id: string): Profile | undefined;
   isDone(profileId: string, slot: RoutineSlot, taskId: string): boolean;
-  countDone(profileId: string, slot: RoutineSlot): { done: number; total: number };
+  countDone(profileId: string, slot: RoutineSlot, weekday?: Weekday): { done: number; total: number };
+  todayWeekday(): Weekday;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -334,7 +340,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       name: input.name,
       avatar: input.avatar,
       color: input.color,
-      routines: { morning: { tasks: [] }, evening: { tasks: [] } },
+      routines: { morning: emptyWeeklyRoutine(), evening: emptyWeeklyRoutine() },
     };
     writeConfig((cfg) => ({ ...cfg, profiles: [...cfg.profiles, profile] }));
     return profile;
@@ -351,14 +357,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
     writeConfig((cfg) => ({ ...cfg, profiles: cfg.profiles.filter((p) => p.id !== profileId) }));
   }, [writeConfig]);
 
-  const setRoutineTasks = useCallback((profileId: string, slot: RoutineSlot, tasks: Task[]) => {
+  const setRoutineTasks = useCallback((profileId: string, slot: RoutineSlot, weekday: Weekday, tasks: Task[]) => {
     writeConfig((cfg) => ({
       ...cfg,
       profiles: cfg.profiles.map((p) =>
         p.id === profileId
-          ? { ...p, routines: { ...p.routines, [slot]: { tasks } } }
+          ? {
+              ...p,
+              routines: {
+                ...p.routines,
+                [slot]: { ...p.routines[slot], [weekday]: { tasks } },
+              },
+            }
           : p,
       ),
+    }));
+  }, [writeConfig]);
+
+  const copyRoutineToAllDays = useCallback((profileId: string, slot: RoutineSlot, sourceDay: Weekday) => {
+    writeConfig((cfg) => ({
+      ...cfg,
+      profiles: cfg.profiles.map((p) => {
+        if (p.id !== profileId) return p;
+        const source = p.routines[slot][sourceDay];
+        const cloneTasks = () => source.tasks.map((t) => ({ ...t }));
+        const nextWeekly = {} as Record<Weekday, { tasks: Task[] }>;
+        for (const day of WEEKDAYS) {
+          nextWeekly[day] = day === sourceDay ? source : { tasks: cloneTasks() };
+        }
+        return { ...p, routines: { ...p.routines, [slot]: nextWeekly } };
+      }),
     }));
   }, [writeConfig]);
 
@@ -389,9 +417,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const reportActivity = useCallback(() => armIdle(), [armIdle]);
 
-  const routineTasks = useCallback((profileId: string, slot: RoutineSlot) => {
+  const routineTasks = useCallback((profileId: string, slot: RoutineSlot, weekday?: Weekday) => {
     const p = stateRef.current.config.profiles.find((pp) => pp.id === profileId);
-    return p?.routines[slot].tasks ?? [];
+    if (!p) return [];
+    const day = weekday ?? weekdayFromDate();
+    return p.routines[slot][day]?.tasks ?? [];
   }, []);
 
   const profile = useCallback((id: string) => {
@@ -403,13 +433,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return !!stateRef.current.checks.entries[key]?.[taskId];
   }, []);
 
-  const countDone = useCallback((profileId: string, slot: RoutineSlot) => {
-    const tasks = routineTasks(profileId, slot);
+  const countDone = useCallback((profileId: string, slot: RoutineSlot, weekday?: Weekday) => {
+    const tasks = routineTasks(profileId, slot, weekday);
     const key = checksKey(profileId, slot, stateRef.current.today);
     const day = stateRef.current.checks.entries[key] ?? {};
     const done = tasks.filter((t) => day[t.id]).length;
     return { done, total: tasks.length };
   }, [routineTasks]);
+
+  const todayWeekday = useCallback(() => weekdayFromDate(), []);
 
   const value = useMemo<AppContextValue>(() => ({
     config: state.config,
@@ -432,6 +464,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     updateProfile,
     deleteProfile,
     setRoutineTasks,
+    copyRoutineToAllDays,
     pushToast,
     dismissToast,
     reportActivity,
@@ -439,13 +472,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     profile,
     isDone,
     countDone,
+    todayWeekday,
   }), [
     state.config, state.checks, state.screen, state.adminUnlocked, state.toasts, state.today,
     goto, goBack, replaceScreen, toggleTask, resetRoutine,
     setPin, tryUnlockAdmin, unlockAdmin, lockAdmin, resetEverything,
-    addProfile, updateProfile, deleteProfile, setRoutineTasks,
+    addProfile, updateProfile, deleteProfile, setRoutineTasks, copyRoutineToAllDays,
     pushToast, dismissToast, reportActivity,
-    routineTasks, profile, isDone, countDone,
+    routineTasks, profile, isDone, countDone, todayWeekday,
   ]);
 
   return (

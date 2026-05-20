@@ -1,17 +1,20 @@
+import { useState } from "react";
 import { useApp } from "../state/AppContext";
-import { RoutineSlot, Task } from "../data/types";
+import { RoutineSlot, Task, Weekday, WEEKDAYS, WEEKDAY_LABELS } from "../data/types";
 import { SLOT_META, themeFor } from "../styles/theme";
 import { defaultRoutineTasks } from "../data/defaultRoutines";
 
 interface RoutineEditorProps {
   profileId: string;
   slot: RoutineSlot;
+  weekday: Weekday;
 }
 
-export function RoutineEditor({ profileId, slot }: RoutineEditorProps) {
-  const { profile, routineTasks, setRoutineTasks, goBack, goto, pushToast } = useApp();
+export function RoutineEditor({ profileId, slot, weekday }: RoutineEditorProps) {
+  const { profile, routineTasks, setRoutineTasks, copyRoutineToAllDays, goBack, goto, replaceScreen, pushToast } = useApp();
   const p = profile(profileId);
-  const tasks = routineTasks(profileId, slot);
+  const tasks = routineTasks(profileId, slot, weekday);
+  const [showCopy, setShowCopy] = useState(false);
 
   if (!p) {
     return (
@@ -25,20 +28,39 @@ export function RoutineEditor({ profileId, slot }: RoutineEditorProps) {
   const t = themeFor(p.color);
   const meta = SLOT_META[slot];
 
+  const switchWeekday = (next: Weekday) => {
+    if (next !== weekday) replaceScreen({ kind: "admin-routine", profileId, slot, weekday: next });
+  };
+
   const move = (taskId: string, delta: -1 | 1) => {
     const i = tasks.findIndex((tk) => tk.id === taskId);
     const j = i + delta;
     if (i < 0 || j < 0 || j >= tasks.length) return;
     const next = tasks.slice();
     [next[i], next[j]] = [next[j], next[i]];
-    setRoutineTasks(profileId, slot, next);
+    setRoutineTasks(profileId, slot, weekday, next);
   };
 
   const remove = (taskId: string) => {
     const snapshot = tasks.slice();
     const next = tasks.filter((tk) => tk.id !== taskId);
-    setRoutineTasks(profileId, slot, next);
-    pushToast("Opgave slettet", () => setRoutineTasks(profileId, slot, snapshot));
+    setRoutineTasks(profileId, slot, weekday, next);
+    pushToast("Opgave slettet", () => setRoutineTasks(profileId, slot, weekday, snapshot));
+  };
+
+  const handleCopy = () => {
+    const before = p.routines[slot];
+    copyRoutineToAllDays(profileId, slot, weekday);
+    setShowCopy(false);
+    pushToast(
+      `Kopieret til alle ugens dage`,
+      () => {
+        // Restore original days
+        for (const day of WEEKDAYS) {
+          setRoutineTasks(profileId, slot, day, before[day].tasks);
+        }
+      },
+    );
   };
 
   return (
@@ -49,21 +71,54 @@ export function RoutineEditor({ profileId, slot }: RoutineEditorProps) {
         </button>
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-black text-ink-900 leading-tight">{meta.icon} {meta.label}</h1>
-          <p className="text-ink-500 text-sm">{p.name}'s rutine · {tasks.length} opgaver</p>
+          <p className="text-ink-500 text-sm">{p.name}'s rutine</p>
         </div>
       </header>
 
-      <main className="flex-1 px-5 py-4 flex flex-col gap-3 max-w-md mx-auto w-full">
+      <div className="px-5 pb-3 overflow-x-auto -mx-1">
+        <div className="flex gap-2 px-1">
+          {WEEKDAYS.map((day) => {
+            const active = day === weekday;
+            const dayTaskCount = p.routines[slot][day].tasks.length;
+            return (
+              <button
+                key={day}
+                onClick={() => switchWeekday(day)}
+                aria-pressed={active}
+                className={`shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-2xl font-bold transition-all duration-150 active:scale-95
+                  ${active ? `${t.bg} text-white shadow-lift` : "bg-white text-ink-700 shadow-soft"}`}
+              >
+                <span className="text-sm">{WEEKDAY_LABELS[day].short}</span>
+                <span className={`text-[10px] font-bold ${active ? "text-white/80" : "text-ink-400"}`}>{dayTaskCount}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <main className="flex-1 px-5 py-3 flex flex-col gap-3 max-w-md mx-auto w-full">
+        <div className="flex items-center justify-between gap-3 px-1">
+          <h2 className="text-lg font-bold text-ink-700">{WEEKDAY_LABELS[weekday].full}</h2>
+          {tasks.length > 0 && (
+            <button
+              onClick={() => setShowCopy(true)}
+              className="text-sm font-bold text-brand-600 active:text-brand-800 underline-offset-4 underline"
+            >
+              Kopier til alle dage
+            </button>
+          )}
+        </div>
+
         {tasks.length === 0 && (
           <div className="bg-white rounded-3xl shadow-soft p-8 text-center flex flex-col items-center gap-3">
             <div className="text-5xl">📝</div>
-            <h2 className="text-xl font-bold text-ink-900">Ingen opgaver endnu</h2>
+            <h2 className="text-xl font-bold text-ink-900">Ingen opgaver på {WEEKDAY_LABELS[weekday].full.toLowerCase()}</h2>
             <p className="text-ink-500">Start fra bunden eller brug en skabelon.</p>
             <button
               onClick={() => {
                 const template = defaultRoutineTasks(slot);
-                setRoutineTasks(profileId, slot, template);
-                pushToast(`Skabelon brugt (${template.length} opgaver)`, () => setRoutineTasks(profileId, slot, []));
+                setRoutineTasks(profileId, slot, weekday, template);
+                pushToast(`Skabelon brugt på ${WEEKDAY_LABELS[weekday].full.toLowerCase()}`, () => setRoutineTasks(profileId, slot, weekday, []));
               }}
               className={`mt-2 ${t.bg} text-white font-bold text-base px-6 py-3 rounded-2xl shadow-soft active:scale-95 transition-transform`}
             >
@@ -79,7 +134,7 @@ export function RoutineEditor({ profileId, slot }: RoutineEditorProps) {
             isFirst={idx === 0}
             isLast={idx === tasks.length - 1}
             colorAccent={t.text}
-            onEdit={() => goto({ kind: "admin-task", profileId, slot, taskId: task.id })}
+            onEdit={() => goto({ kind: "admin-task", profileId, slot, weekday, taskId: task.id })}
             onUp={() => move(task.id, -1)}
             onDown={() => move(task.id, 1)}
             onDelete={() => remove(task.id)}
@@ -87,12 +142,38 @@ export function RoutineEditor({ profileId, slot }: RoutineEditorProps) {
         ))}
 
         <button
-          onClick={() => goto({ kind: "admin-task", profileId, slot, taskId: "new" })}
+          onClick={() => goto({ kind: "admin-task", profileId, slot, weekday, taskId: "new" })}
           className={`mt-2 ${t.bg} text-white font-bold text-base py-4 rounded-3xl shadow-lift active:scale-95 transition-transform`}
         >
           + Tilføj opgave
         </button>
       </main>
+
+      {showCopy && (
+        <div className="fixed inset-0 z-40 bg-ink-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-lift p-6 w-full max-w-sm flex flex-col gap-4 animate-fade-up">
+            <h3 className="text-xl font-black text-ink-900">Kopier {WEEKDAY_LABELS[weekday].full.toLowerCase()}s opgaver til alle dage?</h3>
+            <p className="text-ink-500 text-sm">
+              Andre dage får samme opgaver som {WEEKDAY_LABELS[weekday].full.toLowerCase()}.
+              Det her overskriver hvad de havde i forvejen — men du kan fortryde lige bagefter.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowCopy(false)}
+                className="flex-1 bg-ink-100 text-ink-700 font-bold py-3 rounded-2xl active:scale-95 transition-transform"
+              >
+                Fortryd
+              </button>
+              <button
+                onClick={handleCopy}
+                className={`flex-1 ${t.bg} text-white font-bold py-3 rounded-2xl active:scale-95 transition-transform`}
+              >
+                Kopier
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

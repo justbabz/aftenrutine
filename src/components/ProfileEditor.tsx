@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useApp } from "../state/AppContext";
-import { Profile, ProfileColor } from "../data/types";
+import { Profile, ProfileColor, weekdayFromDate } from "../data/types";
 import { themeFor } from "../styles/theme";
 import { AvatarPicker } from "./AvatarPicker";
 import { ColorPicker } from "./ColorPicker";
@@ -68,14 +68,14 @@ export function ProfileEditor({ profileId }: ProfileEditorProps) {
           <RoutineRow
             label="Morgen-rutine"
             icon="🌅"
-            count={p.routines.morning.tasks.length}
-            onOpen={() => goto({ kind: "admin-routine", profileId: p.id, slot: "morning" })}
+            weeklyCount={Object.values(p.routines.morning).reduce((sum, r) => sum + r.tasks.length, 0)}
+            onOpen={() => goto({ kind: "admin-routine", profileId: p.id, slot: "morning", weekday: weekdayFromDate() })}
           />
           <RoutineRow
             label="Aften-rutine"
             icon="🌙"
-            count={p.routines.evening.tasks.length}
-            onOpen={() => goto({ kind: "admin-routine", profileId: p.id, slot: "evening" })}
+            weeklyCount={Object.values(p.routines.evening).reduce((sum, r) => sum + r.tasks.length, 0)}
+            onOpen={() => goto({ kind: "admin-routine", profileId: p.id, slot: "evening", weekday: weekdayFromDate() })}
           />
         </section>
 
@@ -137,7 +137,7 @@ export function ProfileEditor({ profileId }: ProfileEditorProps) {
   );
 }
 
-function RoutineRow({ label, icon, count, onOpen }: { label: string; icon: string; count: number; onOpen: () => void }) {
+function RoutineRow({ label, icon, weeklyCount, onOpen }: { label: string; icon: string; weeklyCount: number; onOpen: () => void }) {
   return (
     <button
       onClick={onOpen}
@@ -146,7 +146,7 @@ function RoutineRow({ label, icon, count, onOpen }: { label: string; icon: strin
       <div className="w-12 h-12 rounded-2xl bg-cream-100 flex items-center justify-center text-2xl" aria-hidden>{icon}</div>
       <div className="flex-1">
         <div className="text-base font-bold text-ink-900">{label}</div>
-        <div className="text-sm text-ink-500">{count} opgaver</div>
+        <div className="text-sm text-ink-500">{weeklyCount} opgaver i alt på ugen</div>
       </div>
       <svg viewBox="0 0 24 24" className="w-5 h-5 text-ink-300" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
     </button>

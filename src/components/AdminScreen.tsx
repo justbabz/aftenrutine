@@ -113,8 +113,8 @@ function DangerZone() {
 
 function ProfileRow({ profile, onEdit }: { profile: Profile; onEdit: () => void }) {
   const t = themeFor(profile.color);
-  const morningCount = profile.routines.morning.tasks.length;
-  const eveningCount = profile.routines.evening.tasks.length;
+  const morningCount = Object.values(profile.routines.morning).reduce((sum, r) => sum + r.tasks.length, 0);
+  const eveningCount = Object.values(profile.routines.evening).reduce((sum, r) => sum + r.tasks.length, 0);
   return (
     <button
       onClick={onEdit}

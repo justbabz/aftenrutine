@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useApp } from "../state/AppContext";
-import { RoutineSlot, Task } from "../data/types";
+import { RoutineSlot, Task, Weekday, WEEKDAY_LABELS } from "../data/types";
 import { themeFor } from "../styles/theme";
 import {
   EMOJI_CATEGORIES,
@@ -13,6 +13,7 @@ import {
 interface TaskEditorProps {
   profileId: string;
   slot: RoutineSlot;
+  weekday: Weekday;
   taskId: string | "new";
 }
 
@@ -20,10 +21,10 @@ function genId(): string {
   return crypto.randomUUID();
 }
 
-export function TaskEditor({ profileId, slot, taskId }: TaskEditorProps) {
+export function TaskEditor({ profileId, slot, weekday, taskId }: TaskEditorProps) {
   const { profile, routineTasks, setRoutineTasks, goBack, pushToast } = useApp();
   const p = profile(profileId);
-  const tasks = routineTasks(profileId, slot);
+  const tasks = routineTasks(profileId, slot, weekday);
   const existing = taskId === "new" ? null : tasks.find((t) => t.id === taskId) ?? null;
 
   const [label, setLabel] = useState(existing?.label ?? "");
@@ -65,7 +66,7 @@ export function TaskEditor({ profileId, slot, taskId }: TaskEditorProps) {
     } else {
       next = [...tasks, { id: genId(), label: label.trim(), emoji, arasaacId }];
     }
-    setRoutineTasks(profileId, slot, next);
+    setRoutineTasks(profileId, slot, weekday, next);
     goBack();
     pushToast(existing ? "Opgave opdateret" : "Opgave tilføjet");
   };
@@ -103,7 +104,10 @@ export function TaskEditor({ profileId, slot, taskId }: TaskEditorProps) {
         <button onClick={goBack} aria-label="Tilbage" className="w-12 h-12 rounded-full bg-white shadow-soft flex items-center justify-center active:scale-95">
           <svg viewBox="0 0 24 24" className="w-6 h-6 text-ink-700" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <h1 className="text-2xl font-black text-ink-900 flex-1">{existing ? "Rediger opgave" : "Ny opgave"}</h1>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl font-black text-ink-900 leading-tight">{existing ? "Rediger opgave" : "Ny opgave"}</h1>
+          <p className="text-ink-500 text-sm">{WEEKDAY_LABELS[weekday].full}</p>
+        </div>
       </header>
 
       <main className="flex-1 px-5 py-4 flex flex-col gap-5 max-w-md mx-auto w-full overflow-y-auto">
