@@ -89,8 +89,7 @@ export function ChecklistGrid({ tasks, done, onToggle, color }: ChecklistGridPro
             style={{ scrollbarWidth: "none" }}
           >
             <ol
-              className="flex gap-4 items-stretch mx-auto"
-              style={{ width: "max-content", maxWidth: "100%" }}
+              className="flex flex-nowrap gap-4 items-stretch mx-auto w-max"
             >
               {/* Mobile-only spacer so the first card can sit in the middle with neighbour peeking */}
               <li aria-hidden className="shrink-0 sm:hidden" style={{ width: "max(0px, calc(50vw - 110px))" }} />
