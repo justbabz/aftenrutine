@@ -41,27 +41,28 @@ export function RoutineView({ profileId, slot }: RoutineViewProps) {
 
   return (
     <div className="min-h-dvh bg-cream-50 flex flex-col pt-safe pb-safe">
-      <header className={`bg-gradient-to-b ${t.gradient} text-white px-5 pt-4 pb-6`}>
-        <div className="flex items-center justify-between mb-2">
-          <button
-            onClick={goBack}
-            aria-label="Tilbage"
-            className="w-12 h-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center active:scale-95 transition-transform"
-          >
-            <svg viewBox="0 0 24 24" className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
-          <div className="text-3xl" aria-hidden>{p.avatar.emoji}</div>
-        </div>
-        <h1 className="text-3xl font-black leading-tight drop-shadow-sm">{p.name}</h1>
-        <p className="text-white/90 text-base mt-0.5">{meta.subtitle}</p>
+      <header className={`relative bg-gradient-to-b ${t.gradient} text-white px-5 pt-4 pb-7 flex flex-col items-center`}>
+        <button
+          onClick={goBack}
+          aria-label="Tilbage"
+          className="absolute left-5 top-4 w-12 h-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center active:scale-95 transition-transform"
+        >
+          <svg viewBox="0 0 24 24" className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
 
-        <div className="mt-5 bg-white/15 backdrop-blur p-1.5 rounded-3xl flex gap-1.5">
+        <div className="flex flex-col items-center text-center pt-2">
+          <div className="text-7xl sm:text-8xl mb-2 drop-shadow-sm leading-none" aria-hidden>{p.avatar.emoji}</div>
+          <h1 className="text-4xl font-black leading-tight drop-shadow-sm">{p.name}</h1>
+          <p className="text-white/90 text-lg mt-1">{meta.subtitle}</p>
+        </div>
+
+        <div className="mt-5 bg-white/15 backdrop-blur p-1.5 rounded-3xl flex gap-1.5 w-full max-w-sm">
           <SlotTab label="Morgen" icon="🌅" active={slot === "morning"} onClick={() => switchSlot("morning")} />
           <SlotTab label="Aften" icon="🌙" active={slot === "evening"} onClick={() => switchSlot("evening")} />
         </div>
       </header>
 
-      <main className="flex-1 px-4 py-6 w-full">
+      <main className="flex-1 flex items-center justify-center px-4 py-6 w-full">
         <ChecklistGrid
           tasks={tasks}
           done={(id) => isDone(profileId, slot, id)}

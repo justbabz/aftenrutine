@@ -8,18 +8,16 @@ export function ProfilePicker() {
 
   return (
     <div className="min-h-dvh bg-cream-50 flex flex-col pt-safe pb-safe">
-      <header className="px-6 pt-6 pb-2 flex items-baseline justify-between">
-        <div>
-          <h1 className="text-3xl font-black text-ink-900 leading-tight">Hvem er du?</h1>
+      <main className="flex-1 flex flex-col items-center justify-center px-6 gap-8 w-full">
+        <div className="text-center">
+          <h1 className="text-4xl font-black text-ink-900 leading-tight">Hvem er du?</h1>
           <p className="text-ink-500 text-base mt-1">Vælg dig selv for at se din rutine</p>
         </div>
-      </header>
 
-      <main className="flex-1 px-6 py-6">
         {profiles.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
+          <div className="flex flex-wrap justify-center gap-4 max-w-4xl">
             {profiles.map((p) => (
               <ProfileCard key={p.id} profile={p} onPick={() => goto({ kind: "routine", profileId: p.id, slot: defaultSlotForNow() })} />
             ))}
@@ -49,14 +47,14 @@ function ProfileCard({ profile, onPick }: { profile: Profile; onPick: () => void
     <button
       onClick={onPick}
       className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${t.gradient} ${t.shadow}
-        p-5 aspect-[3/4] flex flex-col justify-between text-white text-left
+        w-44 sm:w-52 aspect-[3/4] flex flex-col items-center justify-center gap-3 text-white
         active:scale-95 transition-transform duration-150`}
     >
       <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/15" aria-hidden />
       <div className="absolute -bottom-8 -left-8 w-24 h-24 rounded-full bg-white/10" aria-hidden />
-      <div className="relative text-7xl drop-shadow-sm" aria-hidden>{profile.avatar.emoji}</div>
-      <div className="relative">
-        <div className="text-2xl font-black leading-tight drop-shadow-sm">{profile.name}</div>
+      <div className="relative text-8xl sm:text-9xl drop-shadow-sm leading-none" aria-hidden>{profile.avatar.emoji}</div>
+      <div className="relative text-2xl sm:text-3xl font-black leading-tight drop-shadow-sm text-center px-2">
+        {profile.name}
       </div>
     </button>
   );
@@ -65,7 +63,7 @@ function ProfileCard({ profile, onPick }: { profile: Profile; onPick: () => void
 function EmptyState() {
   const { goto } = useApp();
   return (
-    <div className="flex flex-col items-center justify-center text-center gap-4 py-16 max-w-xs mx-auto">
+    <div className="flex flex-col items-center justify-center text-center gap-4 max-w-xs">
       <div className="text-7xl">👶</div>
       <h2 className="text-2xl font-bold text-ink-900">Ingen børn endnu</h2>
       <p className="text-ink-500">Åbn forælder-indstillinger for at tilføje et barn.</p>
