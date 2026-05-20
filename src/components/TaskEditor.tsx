@@ -38,27 +38,41 @@ interface CustomEmojiInputProps {
 function CustomEmojiInput({ currentEmoji, onPick, accentRing, accentSoft }: CustomEmojiInputProps) {
   const isCustom = !!currentEmoji && !flatEmojiOptions().some((o) => o.emoji === currentEmoji);
   return (
-    <div className={`flex items-center gap-3 rounded-2xl shadow-soft p-3 transition-colors ${isCustom ? accentSoft : "bg-white"}`}>
-      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-cream-100 ${isCustom ? `ring-2 ${accentRing}` : ""}`} aria-hidden>
+    <label
+      className={`relative flex items-center gap-3 rounded-2xl shadow-soft p-3 cursor-text transition-colors
+        border-2 border-dashed ${isCustom ? `${accentSoft} ${accentRing} border-current` : "bg-white border-brand-300"}
+        focus-within:border-brand-500 focus-within:shadow-lift`}
+    >
+      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 bg-cream-100 ${isCustom ? `ring-2 ${accentRing}` : ""}`} aria-hidden>
         <span className="text-3xl leading-none">{currentEmoji || "✏️"}</span>
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-bold text-ink-900">Skriv din egen emoji</div>
-        <div className="text-xs text-ink-500">Tryk 🌐 / smiley på tastaturet og vælg fra alle emojis</div>
+        <div className="text-sm font-bold text-ink-900 flex items-center gap-1.5">
+          <span>Skriv din egen emoji</span>
+          <span className="text-brand-600" aria-hidden>→</span>
+        </div>
+        <div className="text-xs text-ink-500 leading-snug">
+          Tryk i feltet, og brug 🌐 eller smiley på dit tastatur for at vælge fra alle emojis
+        </div>
       </div>
-      <input
-        type="text"
-        value=""
-        onChange={(e) => {
-          const picked = extractEmoji(e.target.value);
-          if (picked) onPick(picked);
-          (e.target as HTMLInputElement).value = "";
-        }}
-        placeholder="🙂"
-        aria-label="Indtast en emoji"
-        className="w-16 text-2xl text-center bg-cream-50 border-2 border-transparent focus:border-brand-400 outline-none rounded-2xl py-2 transition-colors"
-      />
-    </div>
+      <div className="relative shrink-0">
+        <input
+          type="text"
+          value=""
+          onChange={(e) => {
+            const picked = extractEmoji(e.target.value);
+            if (picked) onPick(picked);
+            (e.target as HTMLInputElement).value = "";
+          }}
+          aria-label="Indtast en emoji"
+          className="w-20 h-16 text-3xl text-center bg-brand-50 border-2 border-brand-300 focus:border-brand-500 focus:bg-white outline-none rounded-2xl transition-colors caret-brand-600"
+          placeholder="🙂"
+        />
+        <div className="absolute -top-2 -right-2 bg-brand-600 text-white text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow pointer-events-none">
+          Tryk her
+        </div>
+      </div>
+    </label>
   );
 }
 
