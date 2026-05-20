@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { AppConfig, Profile } from "../data/types";
+import { AppConfig, ChecksState, Profile } from "../data/types";
 
 const SYNC_STORAGE_KEY = "aftenrutine-sync-v1";
 
@@ -84,10 +84,11 @@ export function parseInviteCode(hash: string): string | null {
 export type SyncPayload = {
   profiles: Profile[];
   pin: AppConfig["pin"];
+  checks?: ChecksState["entries"];
 };
 
-export function configToPayload(config: AppConfig): SyncPayload {
-  return { profiles: config.profiles, pin: config.pin };
+export function buildPayload(config: AppConfig, checks: ChecksState): SyncPayload {
+  return { profiles: config.profiles, pin: config.pin, checks: checks.entries };
 }
 
 export function payloadIntoConfig(payload: SyncPayload, current: AppConfig): AppConfig {
@@ -98,6 +99,11 @@ export function payloadIntoConfig(payload: SyncPayload, current: AppConfig): App
     failedAttempts: 0,
     lockedUntil: null,
   };
+}
+
+export function payloadIntoChecks(payload: SyncPayload, current: ChecksState): ChecksState {
+  if (!payload.checks) return current;
+  return { schemaVersion: 2, entries: payload.checks };
 }
 
 export interface FamilyRow {

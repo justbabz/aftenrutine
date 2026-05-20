@@ -38,11 +38,12 @@ import {
   todayKey,
 } from "../storage";
 import {
+  buildPayload,
   cloudConfigured,
-  configToPayload,
   fetchFamily,
   generateFamilyId,
   loadSyncSettings,
+  payloadIntoChecks,
   payloadIntoConfig,
   pushFamily,
   saveSyncSettings,
@@ -495,7 +496,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const id = generateFamilyId();
     setSync({ kind: "syncing", familyId: id, deviceName, lastSynced: null });
     try {
-      const payload = configToPayload(stateRef.current.config);
+      const payload = buildPayload(stateRef.current.config, stateRef.current.checks);
       const updatedAt = await pushFamily(id, payload, deviceName);
       remoteUpdatedAtRef.current = updatedAt;
       setSyncSettings({ familyId: id, deviceName });
@@ -520,16 +521,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const row = await fetchFamily(id);
         if (!row) {
           // No remote row → create from local
-          const payload = configToPayload(stateRef.current.config);
+          const payload = buildPayload(stateRef.current.config, stateRef.current.checks);
           const updatedAt = await pushFamily(id, payload, deviceName);
           remoteUpdatedAtRef.current = updatedAt;
         } else {
           suppressNextPushRef.current = true;
           dispatch({ type: "SET_CONFIG", config: payloadIntoConfig(row.payload, stateRef.current.config) });
+          dispatch({ type: "SET_CHECKS", checks: payloadIntoChecks(row.payload, stateRef.current.checks) });
           remoteUpdatedAtRef.current = row.updatedAt;
         }
       } else {
-        const payload = configToPayload(stateRef.current.config);
+        const payload = buildPayload(stateRef.current.config, stateRef.current.checks);
         const updatedAt = await pushFamily(id, payload, deviceName);
         remoteUpdatedAtRef.current = updatedAt;
       }
@@ -564,6 +566,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (row) {
           suppressNextPushRef.current = true;
           dispatch({ type: "SET_CONFIG", config: payloadIntoConfig(row.payload, stateRef.current.config) });
+          dispatch({ type: "SET_CHECKS", checks: payloadIntoChecks(row.payload, stateRef.current.checks) });
           remoteUpdatedAtRef.current = row.updatedAt;
           setSync((s) => s.kind === "off" ? s : { kind: "idle", familyId: s.familyId, deviceName: s.deviceName, lastSynced: row.updatedAt });
         }
@@ -584,6 +587,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (row.updatedAt === remoteUpdatedAtRef.current) return;
       suppressNextPushRef.current = true;
       dispatch({ type: "SET_CONFIG", config: payloadIntoConfig(row.payload, stateRef.current.config) });
+      dispatch({ type: "SET_CHECKS", checks: payloadIntoChecks(row.payload, stateRef.current.checks) });
       remoteUpdatedAtRef.current = row.updatedAt;
       setSync((s) => s.kind === "off" ? s : { kind: "idle", familyId: s.familyId, deviceName: s.deviceName, lastSynced: row.updatedAt });
     });
@@ -602,7 +606,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const timer = window.setTimeout(async () => {
       try {
         setSync((s) => s.kind === "off" ? s : { kind: "syncing", familyId: s.familyId, deviceName: s.deviceName, lastSynced: s.lastSynced });
-        const payload = configToPayload(stateRef.current.config);
+        const payload = buildPayload(stateRef.current.config, stateRef.current.checks);
         const updatedAt = await pushFamily(familyId, payload, deviceName);
         remoteUpdatedAtRef.current = updatedAt;
         setSync((s) => s.kind === "off" ? s : { kind: "idle", familyId: s.familyId, deviceName: s.deviceName, lastSynced: updatedAt });
@@ -612,7 +616,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     }, 1500);
     return () => window.clearTimeout(timer);
-  }, [state.config, sync.kind === "off" ? "off" : sync.familyId, sync.kind === "off" ? "" : sync.deviceName]);
+  }, [state.config, state.checks, sync.kind === "off" ? "off" : sync.familyId, sync.kind === "off" ? "" : sync.deviceName]);
 
   const value = useMemo<AppContextValue>(() => ({
     config: state.config,
