@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - claude/build-ios-app-NHLFm
   workflow_dispatch:
 
 permissions:
