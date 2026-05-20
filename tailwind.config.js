@@ -92,11 +92,13 @@ export default {
         "scale-in": { "0%": { transform: "scale(0.85)", opacity: "0" }, "100%": { transform: "scale(1)", opacity: "1" } },
         "fade-up":  { "0%": { transform: "translateY(8px)", opacity: "0" }, "100%": { transform: "translateY(0)", opacity: "1" } },
         bounce2:    { "0%, 100%": { transform: "translateY(0)" }, "50%": { transform: "translateY(-8px)" } },
+        "nudge-x":  { "0%, 100%": { transform: "translateX(0)" }, "50%": { transform: "translateX(4px)" } },
       },
       animation: {
         "scale-in": "scale-in 220ms cubic-bezier(0.16, 1, 0.3, 1)",
         "fade-up":  "fade-up 220ms cubic-bezier(0.16, 1, 0.3, 1)",
         bounce2:    "bounce2 1.6s ease-in-out infinite",
+        "nudge-x":  "nudge-x 1.4s ease-in-out infinite",
       },
     },
   },
