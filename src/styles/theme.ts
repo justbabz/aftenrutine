@@ -45,11 +45,24 @@ export function themeFor(color: ProfileColor): ColorTheme {
   return COLOR_THEMES[color];
 }
 
-export const SLOT_META: Record<RoutineSlot, { label: string; icon: string; subtitle: string }> = {
-  morning: { label: "Morgen", icon: "🌅", subtitle: "Godmorgen!" },
-  evening: { label: "Aften", icon: "🌙", subtitle: "Godnat snart" },
+export const SLOT_META: Record<RoutineSlot, { label: string; icon: string }> = {
+  morning: { label: "Morgen", icon: "🌅" },
+  evening: { label: "Aften", icon: "🌙" },
 };
 
 export function defaultSlotForNow(d: Date = new Date()): RoutineSlot {
   return d.getHours() < 14 ? "morning" : "evening";
+}
+
+/**
+ * Time-of-day greeting:
+ *  - 04:00–11:59 → "Godmorgen!"
+ *  - 12:00–17:29 → "God eftermiddag"
+ *  - 17:30–03:59 → "Godaften"
+ */
+export function greetingFor(d: Date = new Date()): string {
+  const minutes = d.getHours() * 60 + d.getMinutes();
+  if (minutes >= 4 * 60 && minutes < 12 * 60) return "Godmorgen!";
+  if (minutes >= 12 * 60 && minutes < 17 * 60 + 30) return "God eftermiddag";
+  return "Godaften";
 }

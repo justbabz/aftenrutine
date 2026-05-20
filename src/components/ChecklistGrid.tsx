@@ -48,9 +48,9 @@ export function ChecklistGrid({ tasks, done, onToggle, color }: ChecklistGridPro
     if (!el) return;
     if (el.scrollWidth <= el.clientWidth + 4) return;  // Nothing to scroll
 
-    const cards = el.querySelectorAll("li");
+    const cards = el.querySelectorAll<HTMLElement>("li[data-task]");
     const nextIdx = tasks.findIndex((tk) => !done(tk.id));
-    const card = cards[nextIdx] as HTMLElement | undefined;
+    const card = cards[nextIdx];
     if (!card) return;
 
     const cardCenter = card.offsetLeft + card.offsetWidth / 2;
@@ -89,14 +89,17 @@ export function ChecklistGrid({ tasks, done, onToggle, color }: ChecklistGridPro
             style={{ scrollbarWidth: "none" }}
           >
             <ol
-              className="flex gap-4 items-stretch px-6 mx-auto"
+              className="flex gap-4 items-stretch mx-auto"
               style={{ width: "max-content", maxWidth: "100%" }}
             >
+              {/* Mobile-only spacer so the first card can sit in the middle with neighbour peeking */}
+              <li aria-hidden className="shrink-0 sm:hidden" style={{ width: "max(0px, calc(50vw - 110px))" }} />
               {tasks.map((task, idx) => (
                 <li
                   key={task.id}
+                  data-task
                   className="snap-center shrink-0 flex flex-col items-center gap-2"
-                  style={{ width: "clamp(180px, 16vw, 240px)" }}
+                  style={{ width: "clamp(200px, 16vw, 240px)" }}
                 >
                   <span
                     className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white shadow-soft text-ink-500 text-sm font-bold"
@@ -112,6 +115,7 @@ export function ChecklistGrid({ tasks, done, onToggle, color }: ChecklistGridPro
                   />
                 </li>
               ))}
+              <li aria-hidden className="shrink-0 sm:hidden" style={{ width: "max(0px, calc(50vw - 110px))" }} />
             </ol>
           </div>
 
