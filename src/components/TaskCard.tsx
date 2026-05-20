@@ -37,7 +37,7 @@ export function TaskCard({ task, done, color, onToggle }: TaskCardProps) {
             src={pictogramUrl(task.arasaacId as number)}
             alt=""
             aria-hidden
-            className={`max-h-24 max-w-full object-contain transition-opacity ${done ? "opacity-90 brightness-0 invert" : "opacity-100"}`}
+            className={`max-h-24 max-w-full object-contain transition-opacity ${done ? "opacity-75" : "opacity-100"}`}
             onError={() => setImgError(true)}
           />
         ) : (

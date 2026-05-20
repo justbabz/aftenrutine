@@ -1,6 +1,7 @@
 import { useApp } from "../state/AppContext";
 import { RoutineSlot, Task } from "../data/types";
 import { SLOT_META, themeFor } from "../styles/theme";
+import { defaultRoutineTasks } from "../data/defaultRoutines";
 
 interface RoutineEditorProps {
   profileId: string;
@@ -54,10 +55,20 @@ export function RoutineEditor({ profileId, slot }: RoutineEditorProps) {
 
       <main className="flex-1 px-5 py-4 flex flex-col gap-3 max-w-md mx-auto w-full">
         {tasks.length === 0 && (
-          <div className="bg-white rounded-3xl shadow-soft p-8 text-center">
-            <div className="text-5xl mb-3">📝</div>
-            <h2 className="text-xl font-bold text-ink-900 mb-1">Ingen opgaver endnu</h2>
-            <p className="text-ink-500">Tryk på "Tilføj opgave" for at lave den første.</p>
+          <div className="bg-white rounded-3xl shadow-soft p-8 text-center flex flex-col items-center gap-3">
+            <div className="text-5xl">📝</div>
+            <h2 className="text-xl font-bold text-ink-900">Ingen opgaver endnu</h2>
+            <p className="text-ink-500">Start fra bunden eller brug en skabelon.</p>
+            <button
+              onClick={() => {
+                const template = defaultRoutineTasks(slot);
+                setRoutineTasks(profileId, slot, template);
+                pushToast(`Skabelon brugt (${template.length} opgaver)`, () => setRoutineTasks(profileId, slot, []));
+              }}
+              className={`mt-2 ${t.bg} text-white font-bold text-base px-6 py-3 rounded-2xl shadow-soft active:scale-95 transition-transform`}
+            >
+              Brug skabelon
+            </button>
           </div>
         )}
 

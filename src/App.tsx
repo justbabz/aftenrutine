@@ -8,6 +8,7 @@ import { ProfileEditor } from "./components/ProfileEditor";
 import { RoutineEditor } from "./components/RoutineEditor";
 import { TaskEditor } from "./components/TaskEditor";
 import { ToastHost } from "./components/ToastHost";
+import { UpdatePrompt } from "./components/UpdatePrompt";
 
 function Router() {
   const { screen } = useApp();
@@ -36,6 +37,7 @@ export default function App() {
     <AppProvider>
       <Router />
       <ToastHost />
+      <UpdatePrompt />
     </AppProvider>
   );
 }

@@ -28,6 +28,10 @@ export function TaskEditor({ profileId, slot, taskId }: TaskEditorProps) {
 
   const [label, setLabel] = useState(existing?.label ?? "");
   const [emoji, setEmoji] = useState(existing?.emoji ?? "🪥");
+  const [arasaacId, setArasaacId] = useState<number | null>(existing?.arasaacId ?? null);
+  const [showArasaac, setShowArasaac] = useState(existing?.arasaacId != null);
+  const [arasaacInput, setArasaacInput] = useState(existing?.arasaacId?.toString() ?? "");
+  const [arasaacError, setArasaacError] = useState(false);
   const [activeCategory, setActiveCategory] = useState<EmojiCategory>("hygiejne");
   const [query, setQuery] = useState("");
 
@@ -56,14 +60,36 @@ export function TaskEditor({ profileId, slot, taskId }: TaskEditorProps) {
     let next: Task[];
     if (existing) {
       next = tasks.map((tk) =>
-        tk.id === existing.id ? { ...tk, label: label.trim(), emoji, arasaacId: tk.arasaacId } : tk,
+        tk.id === existing.id ? { ...tk, label: label.trim(), emoji, arasaacId } : tk,
       );
     } else {
-      next = [...tasks, { id: genId(), label: label.trim(), emoji, arasaacId: null }];
+      next = [...tasks, { id: genId(), label: label.trim(), emoji, arasaacId }];
     }
     setRoutineTasks(profileId, slot, next);
     goBack();
     pushToast(existing ? "Opgave opdateret" : "Opgave tilføjet");
+  };
+
+  const applyArasaacInput = (raw: string) => {
+    setArasaacInput(raw);
+    setArasaacError(false);
+    const cleaned = raw.trim();
+    if (!cleaned) {
+      setArasaacId(null);
+      return;
+    }
+    const n = parseInt(cleaned, 10);
+    if (!Number.isFinite(n) || n <= 0) {
+      setArasaacId(null);
+      return;
+    }
+    setArasaacId(n);
+  };
+
+  const clearArasaac = () => {
+    setArasaacId(null);
+    setArasaacInput("");
+    setArasaacError(false);
   };
 
   const pickOption = (option: EmojiOption) => {
@@ -82,7 +108,19 @@ export function TaskEditor({ profileId, slot, taskId }: TaskEditorProps) {
 
       <main className="flex-1 px-5 py-4 flex flex-col gap-5 max-w-md mx-auto w-full overflow-y-auto">
         <div className="bg-white rounded-3xl shadow-soft p-5 flex items-center gap-4">
-          <div className="w-20 h-20 rounded-2xl bg-cream-100 flex items-center justify-center text-5xl shrink-0" aria-hidden>{emoji}</div>
+          <div className="w-20 h-20 rounded-2xl bg-cream-100 flex items-center justify-center shrink-0 overflow-hidden">
+            {arasaacId !== null && !arasaacError ? (
+              <img
+                src={`https://static.arasaac.org/pictograms/${arasaacId}/${arasaacId}_300.png`}
+                alt=""
+                aria-hidden
+                className="max-h-full max-w-full object-contain"
+                onError={() => setArasaacError(true)}
+              />
+            ) : (
+              <span className="text-5xl" aria-hidden>{emoji}</span>
+            )}
+          </div>
           <div className="flex-1 min-w-0">
             <label className="text-xs font-semibold text-ink-500 uppercase tracking-wide">Tekst</label>
             <input
@@ -142,6 +180,51 @@ export function TaskEditor({ profileId, slot, taskId }: TaskEditorProps) {
               <div className="col-span-4 text-center text-ink-500 py-6">Ingen resultater</div>
             )}
           </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => setShowArasaac((s) => !s)}
+            className="bg-white rounded-2xl shadow-soft px-4 py-3 flex items-center justify-between text-left active:scale-[0.99] transition-transform"
+          >
+            <div className="flex flex-col">
+              <span className="font-bold text-ink-900">Brug ARASAAC-piktogram</span>
+              <span className="text-xs text-ink-500">
+                {arasaacId ? `ID ${arasaacId}${arasaacError ? " (kunne ikke hentes)" : ""}` : "Avanceret · vælg et symbol via ID"}
+              </span>
+            </div>
+            <svg viewBox="0 0 24 24" className={`w-5 h-5 text-ink-400 transition-transform ${showArasaac ? "rotate-90" : ""}`} fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          {showArasaac && (
+            <div className="bg-white rounded-3xl shadow-soft p-4 flex flex-col gap-3 animate-fade-up">
+              <p className="text-sm text-ink-500">
+                Find et symbol på <span className="font-semibold text-ink-700">arasaac.org</span> og kopier tallet fra URL'en herind.
+              </p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\d*"
+                  value={arasaacInput}
+                  onChange={(e) => applyArasaacInput(e.target.value)}
+                  placeholder="Fx 2369"
+                  className="flex-1 bg-cream-100 border-2 border-transparent focus:border-brand-400 outline-none rounded-2xl px-4 py-3 text-base font-bold text-ink-900 placeholder:text-ink-300 transition-colors"
+                />
+                {arasaacId !== null && (
+                  <button
+                    onClick={clearArasaac}
+                    className="bg-ink-100 text-ink-700 font-semibold px-3 py-3 rounded-2xl active:scale-95 transition-transform text-sm"
+                  >
+                    Fjern
+                  </button>
+                )}
+              </div>
+              {arasaacError && (
+                <p className="text-bad-500 text-sm font-semibold">Det ID gav ikke noget billede. Tjek tallet på arasaac.org.</p>
+              )}
+            </div>
+          )}
         </div>
 
         <button
