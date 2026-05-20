@@ -12,23 +12,34 @@ export default defineConfig({
       registerType: "autoUpdate",
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/static\.arasaac\.org\/.*/i,
             handler: "CacheFirst",
             options: {
               cacheName: "arasaac-pictograms",
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              expiration: { maxEntries: 250, maxAgeSeconds: 60 * 60 * 24 * 60 },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "google-fonts",
+              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
             },
           },
         ],
       },
       manifest: {
-        name: "Aftenrutine",
-        short_name: "Aftenrutine",
-        description: "Tjekliste til aftenrutinen",
-        theme_color: "#7c3aed",
-        background_color: "#fdf4ff",
+        name: "Familierutine",
+        short_name: "Familierutine",
+        description: "Morgen- og aftenrutine for hele familien",
+        theme_color: "#FDFAF5",
+        background_color: "#FDFAF5",
         display: "standalone",
         orientation: "portrait",
         start_url: base,
