@@ -63,6 +63,10 @@ function hasPin(row: AdminFamilyRow): boolean {
   return Boolean(row.payload?.pin);
 }
 
+function familyName(row: AdminFamilyRow): string {
+  return row.payload?.familyName?.trim() ?? "";
+}
+
 function downloadBlob(filename: string, content: string, mime: string) {
   const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
@@ -81,7 +85,7 @@ function exportJson(rows: AdminFamilyRow[]) {
 }
 
 function exportCsv(rows: AdminFamilyRow[]) {
-  const header = ["id", "created_at", "updated_at", "last_device", "profiles", "tasks", "has_pin"];
+  const header = ["id", "family_name", "created_at", "updated_at", "last_device", "profiles", "tasks", "has_pin"];
   const escape = (v: unknown) => {
     const s = v === null || v === undefined ? "" : String(v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -90,6 +94,7 @@ function exportCsv(rows: AdminFamilyRow[]) {
   for (const r of rows) {
     lines.push([
       r.id,
+      familyName(r),
       r.createdAt ?? "",
       r.updatedAt,
       r.lastDevice ?? "",
@@ -145,7 +150,11 @@ export function AdminDashboard({ onLock }: { onLock: () => void }) {
     const q = query.trim().toUpperCase();
     const cutoff = Date.now() - 7 * DAY_MS;
     return rows.filter((r) => {
-      if (q && !r.id.toUpperCase().includes(q)) return false;
+      if (q) {
+        const matchesId = r.id.toUpperCase().includes(q);
+        const matchesName = familyName(r).toUpperCase().includes(q);
+        if (!matchesId && !matchesName) return false;
+      }
       if (onlyRecent && new Date(r.updatedAt).getTime() < cutoff) return false;
       return true;
     });
@@ -218,7 +227,7 @@ export function AdminDashboard({ onLock }: { onLock: () => void }) {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Søg på familie-ID…"
+            placeholder="Søg på navn eller ID…"
             className="flex-1 min-w-[200px] bg-white border-2 border-ink-100 focus:border-brand-400 outline-none rounded-2xl px-4 py-3 text-ink-900 placeholder:text-ink-300 font-semibold transition-colors"
           />
           <label className="flex items-center gap-2 bg-white rounded-2xl px-4 py-3 border-2 border-ink-100 cursor-pointer select-none">
@@ -255,7 +264,7 @@ export function AdminDashboard({ onLock }: { onLock: () => void }) {
               <table className="w-full text-sm">
                 <thead className="bg-cream-100 text-ink-700">
                   <tr>
-                    <th className="text-left px-4 py-3 font-bold">Familie-ID</th>
+                    <th className="text-left px-4 py-3 font-bold">Familie</th>
                     <th className="text-left px-4 py-3 font-bold">Oprettet</th>
                     <th className="text-left px-4 py-3 font-bold">Sidst aktiv</th>
                     <th className="text-left px-4 py-3 font-bold">Enhed</th>
@@ -265,23 +274,33 @@ export function AdminDashboard({ onLock }: { onLock: () => void }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((row) => (
-                    <tr
-                      key={row.id}
-                      onClick={() => setSelectedId(row.id)}
-                      className={`border-t border-ink-100 cursor-pointer hover:bg-cream-50 transition-colors ${selectedId === row.id ? "bg-brand-50" : ""}`}
-                    >
-                      <td className="px-4 py-3 font-mono text-ink-900">{formatFamilyId(row.id)}</td>
-                      <td className="px-4 py-3 text-ink-700">{relativeTime(row.createdAt)}</td>
-                      <td className="px-4 py-3 text-ink-700">{relativeTime(row.updatedAt)}</td>
-                      <td className="px-4 py-3 text-ink-500">{row.lastDevice ?? "—"}</td>
-                      <td className="px-4 py-3 text-right text-ink-900 font-bold">{profileCount(row)}</td>
-                      <td className="px-4 py-3 text-right text-ink-700">{taskCount(row)}</td>
-                      <td className="px-4 py-3 text-center">
-                        {hasPin(row) ? <span className="text-good-500">✓</span> : <span className="text-ink-300">—</span>}
-                      </td>
-                    </tr>
-                  ))}
+                  {filtered.map((row) => {
+                    const name = familyName(row);
+                    return (
+                      <tr
+                        key={row.id}
+                        onClick={() => setSelectedId(row.id)}
+                        className={`border-t border-ink-100 cursor-pointer hover:bg-cream-50 transition-colors ${selectedId === row.id ? "bg-brand-50" : ""}`}
+                      >
+                        <td className="px-4 py-3">
+                          {name
+                            ? <>
+                                <div className="font-bold text-ink-900">{name}</div>
+                                <div className="font-mono text-xs text-ink-500">{formatFamilyId(row.id)}</div>
+                              </>
+                            : <span className="font-mono text-ink-900">{formatFamilyId(row.id)}</span>}
+                        </td>
+                        <td className="px-4 py-3 text-ink-700">{relativeTime(row.createdAt)}</td>
+                        <td className="px-4 py-3 text-ink-700">{relativeTime(row.updatedAt)}</td>
+                        <td className="px-4 py-3 text-ink-500">{row.lastDevice ?? "—"}</td>
+                        <td className="px-4 py-3 text-right text-ink-900 font-bold">{profileCount(row)}</td>
+                        <td className="px-4 py-3 text-right text-ink-700">{taskCount(row)}</td>
+                        <td className="px-4 py-3 text-center">
+                          {hasPin(row) ? <span className="text-good-500">✓</span> : <span className="text-ink-300">—</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -352,7 +371,10 @@ function DetailPanel({
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-xs font-semibold text-ink-500 uppercase tracking-wide">Familie</div>
-          <div className="font-mono text-lg font-black text-ink-900 break-all">{formatFamilyId(row.id)}</div>
+          {familyName(row) && (
+            <div className="text-lg font-black text-ink-900 break-words">{familyName(row)}</div>
+          )}
+          <div className="font-mono text-sm font-bold text-ink-700 break-all">{formatFamilyId(row.id)}</div>
         </div>
         <button
           onClick={onClose}

@@ -201,6 +201,7 @@ interface AppContextValue {
   addProfile(input: { name: string; avatar: ProfileAvatar; color: ProfileColor }): Profile;
   updateProfile(profile: Profile): void;
   deleteProfile(profileId: string): void;
+  setFamilyName(name: string): void;
   setRoutineTasks(profileId: string, slot: RoutineSlot, weekday: Weekday, tasks: Task[]): void;
   copyRoutineToDays(profileId: string, slot: RoutineSlot, sourceDay: Weekday, targetDays: Weekday[]): void;
 
@@ -395,6 +396,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteProfile = useCallback((profileId: string) => {
     writeConfig((cfg) => ({ ...cfg, profiles: cfg.profiles.filter((p) => p.id !== profileId) }));
+  }, [writeConfig]);
+
+  const setFamilyName = useCallback((name: string) => {
+    const trimmed = name.trim();
+    writeConfig((cfg) => ({ ...cfg, familyName: trimmed || undefined }));
   }, [writeConfig]);
 
   const setRoutineTasks = useCallback((profileId: string, slot: RoutineSlot, weekday: Weekday, tasks: Task[]) => {
@@ -638,6 +644,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addProfile,
     updateProfile,
     deleteProfile,
+    setFamilyName,
     setRoutineTasks,
     copyRoutineToDays,
     pushToast,
@@ -657,7 +664,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     state.config, state.checks, state.screen, state.adminUnlocked, state.toasts, state.today,
     goto, goBack, replaceScreen, toggleTask, resetRoutine,
     setPin, tryUnlockAdmin, unlockAdmin, lockAdmin, resetEverything,
-    addProfile, updateProfile, deleteProfile, setRoutineTasks, copyRoutineToDays,
+    addProfile, updateProfile, deleteProfile, setFamilyName, setRoutineTasks, copyRoutineToDays,
     pushToast, dismissToast, reportActivity,
     routineTasks, profile, isDone, countDone, todayWeekday,
     sync, enableSyncWithNew, enableSyncWithExisting, disableSync,

@@ -60,6 +60,7 @@ export interface AppConfig {
   pin: { hash: string; salt: string } | null;
   failedAttempts: number;
   lockedUntil: number | null;
+  familyName?: string;
 }
 
 export interface ChecksState {
