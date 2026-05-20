@@ -1,9 +1,49 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useApp } from "../state/AppContext";
 import { RoutineSlot } from "../data/types";
 import { SLOT_META, themeFor } from "../styles/theme";
 import { ChecklistGrid } from "./ChecklistGrid";
 import { CelebrationOverlay } from "./CelebrationOverlay";
+
+const CELEBRATED_STORAGE_KEY = "aftenrutine-celebrated-v1";
+type CelebratedCache = { date: string; keys: Set<string> };
+let celebratedCache: CelebratedCache | null = null;
+
+function loadCelebrated(): CelebratedCache {
+  if (celebratedCache) return celebratedCache;
+  try {
+    const raw = localStorage.getItem(CELEBRATED_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as { date: string; keys: string[] };
+      celebratedCache = { date: parsed.date ?? "", keys: new Set(parsed.keys ?? []) };
+      return celebratedCache;
+    }
+  } catch { /* ignore */ }
+  celebratedCache = { date: "", keys: new Set() };
+  return celebratedCache;
+}
+
+function persistCelebrated(): void {
+  if (!celebratedCache) return;
+  try {
+    localStorage.setItem(
+      CELEBRATED_STORAGE_KEY,
+      JSON.stringify({ date: celebratedCache.date, keys: Array.from(celebratedCache.keys) }),
+    );
+  } catch { /* ignore */ }
+}
+
+function shouldCelebrate(key: string, today: string): boolean {
+  const cache = loadCelebrated();
+  if (today !== cache.date) {
+    cache.date = today;
+    cache.keys.clear();
+  }
+  if (cache.keys.has(key)) return false;
+  cache.keys.add(key);
+  persistCelebrated();
+  return true;
+}
 
 interface RoutineViewProps {
   profileId: string;
@@ -11,9 +51,10 @@ interface RoutineViewProps {
 }
 
 export function RoutineView({ profileId, slot }: RoutineViewProps) {
-  const { profile, goBack, replaceScreen, toggleTask, isDone, routineTasks } = useApp();
+  const { profile, goBack, replaceScreen, toggleTask, isDone, routineTasks, today } = useApp();
   const p = profile(profileId);
   const [celebrated, setCelebrated] = useState(false);
+  const lastAllDoneRef = useRef(false);
 
   if (!p) {
     return (
@@ -31,9 +72,14 @@ export function RoutineView({ profileId, slot }: RoutineViewProps) {
   const allDone = tasks.length > 0 && doneCount === tasks.length;
 
   useEffect(() => {
-    if (allDone) setCelebrated(true);
+    const key = `${profileId}:${slot}:${today}`;
+    const wasAllDone = lastAllDoneRef.current;
+    lastAllDoneRef.current = allDone;
+    if (allDone && !wasAllDone) {
+      if (shouldCelebrate(key, today)) setCelebrated(true);
+    }
     if (!allDone) setCelebrated(false);
-  }, [allDone]);
+  }, [allDone, profileId, slot, today]);
 
   const switchSlot = (next: RoutineSlot) => {
     if (next !== slot) replaceScreen({ kind: "routine", profileId, slot: next });
@@ -62,7 +108,7 @@ export function RoutineView({ profileId, slot }: RoutineViewProps) {
         </div>
       </header>
 
-      <main className="flex-1 flex items-center justify-center px-4 py-6 w-full">
+      <main className="flex-1 flex items-center justify-center py-6 w-full">
         <ChecklistGrid
           tasks={tasks}
           done={(id) => isDone(profileId, slot, id)}
