@@ -5,6 +5,8 @@ import { themeFor } from "../styles/theme";
 import { AvatarPicker } from "./AvatarPicker";
 import { ColorPicker } from "./ColorPicker";
 
+type ExpandedField = "name" | "avatar" | "color" | null;
+
 interface ProfileEditorProps {
   profileId: string;
 }
@@ -13,6 +15,7 @@ export function ProfileEditor({ profileId }: ProfileEditorProps) {
   const { profile, updateProfile, deleteProfile, goBack, goto, pushToast } = useApp();
   const p = profile(profileId);
   const [draftName, setDraftName] = useState(p?.name ?? "");
+  const [expanded, setExpanded] = useState<ExpandedField>(null);
   const [showDelete, setShowDelete] = useState(false);
 
   if (!p) {
@@ -50,6 +53,11 @@ export function ProfileEditor({ profileId }: ProfileEditorProps) {
     });
   };
 
+  const toggle = (field: ExpandedField) => {
+    if (field === "name" && expanded === "name") saveName();
+    setExpanded(expanded === field ? null : field);
+  };
+
   return (
     <div className="min-h-dvh bg-cream-50 flex flex-col pt-safe pb-safe">
       <header className="px-5 pt-4 pb-3 flex items-center gap-3">
@@ -79,29 +87,43 @@ export function ProfileEditor({ profileId }: ProfileEditorProps) {
           />
         </section>
 
-        <section className="flex flex-col gap-3">
+        <section className="flex flex-col gap-2">
           <h2 className="text-lg font-bold text-ink-700 px-1">Detaljer</h2>
-          <label className="flex flex-col gap-2 bg-white rounded-3xl shadow-soft p-4">
-            <span className="text-sm font-semibold text-ink-700">Navn</span>
+
+          <CollapsibleRow
+            label="Navn"
+            preview={<span className="text-base font-bold text-ink-900 truncate">{p.name}</span>}
+            open={expanded === "name"}
+            onToggle={() => toggle("name")}
+          >
             <input
               type="text"
               value={draftName}
               onChange={(e) => setDraftName(e.target.value)}
               onBlur={saveName}
+              autoFocus
               maxLength={20}
-              className="bg-cream-100 border-2 border-transparent focus:border-brand-400 outline-none rounded-2xl px-4 py-3 text-lg font-semibold text-ink-900 transition-colors"
+              className="w-full bg-cream-100 border-2 border-transparent focus:border-brand-400 outline-none rounded-2xl px-4 py-3 text-lg font-semibold text-ink-900 transition-colors"
             />
-          </label>
+          </CollapsibleRow>
 
-          <div className="bg-white rounded-3xl shadow-soft p-4 flex flex-col gap-3">
-            <span className="text-sm font-semibold text-ink-700">Figur</span>
+          <CollapsibleRow
+            label="Figur"
+            preview={<span className="text-3xl leading-none" aria-hidden>{p.avatar.emoji}</span>}
+            open={expanded === "avatar"}
+            onToggle={() => toggle("avatar")}
+          >
             <AvatarPicker value={p.avatar.emoji} onChange={setAvatar} />
-          </div>
+          </CollapsibleRow>
 
-          <div className="bg-white rounded-3xl shadow-soft p-4 flex flex-col gap-3">
-            <span className="text-sm font-semibold text-ink-700">Farve</span>
+          <CollapsibleRow
+            label="Farve"
+            preview={<span aria-hidden className={`w-7 h-7 rounded-full shadow-inner ${t.bg}`} />}
+            open={expanded === "color"}
+            onToggle={() => toggle("color")}
+          >
             <ColorPicker value={p.color} onChange={setColor} />
-          </div>
+          </CollapsibleRow>
         </section>
 
         <section className="pt-2">
@@ -133,6 +155,41 @@ export function ProfileEditor({ profileId }: ProfileEditorProps) {
           )}
         </section>
       </main>
+    </div>
+  );
+}
+
+function CollapsibleRow({
+  label, preview, open, onToggle, children,
+}: {
+  label: string;
+  preview: React.ReactNode;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white rounded-3xl shadow-soft overflow-hidden">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full p-4 flex items-center gap-3 text-left active:bg-cream-100 transition-colors"
+      >
+        <div className="flex-1 min-w-0 flex items-center gap-3">
+          <span className="text-sm font-semibold text-ink-500 w-14">{label}</span>
+          <div className="flex-1 min-w-0 flex items-center">{preview}</div>
+        </div>
+        <svg
+          viewBox="0 0 24 24"
+          className={`w-5 h-5 text-ink-400 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
+        >
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+      {open && (
+        <div className="px-4 pb-4 animate-fade-up">{children}</div>
+      )}
     </div>
   );
 }
