@@ -21,6 +21,47 @@ function genId(): string {
   return crypto.randomUUID();
 }
 
+function extractEmoji(raw: string): string | null {
+  if (!raw) return null;
+  // Match emoji including ZWJ sequences, variation selectors, skin tones.
+  const match = raw.match(/\p{Extended_Pictographic}(️|‍\p{Extended_Pictographic}|\p{Emoji_Modifier})*/u);
+  return match ? match[0] : null;
+}
+
+interface CustomEmojiInputProps {
+  currentEmoji: string;
+  onPick: (emoji: string) => void;
+  accentRing: string;
+  accentSoft: string;
+}
+
+function CustomEmojiInput({ currentEmoji, onPick, accentRing, accentSoft }: CustomEmojiInputProps) {
+  const isCustom = !!currentEmoji && !flatEmojiOptions().some((o) => o.emoji === currentEmoji);
+  return (
+    <div className={`flex items-center gap-3 rounded-2xl shadow-soft p-3 transition-colors ${isCustom ? accentSoft : "bg-white"}`}>
+      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-cream-100 ${isCustom ? `ring-2 ${accentRing}` : ""}`} aria-hidden>
+        <span className="text-3xl leading-none">{currentEmoji || "✏️"}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-bold text-ink-900">Skriv din egen emoji</div>
+        <div className="text-xs text-ink-500">Tryk 🌐 / smiley på tastaturet og vælg fra alle emojis</div>
+      </div>
+      <input
+        type="text"
+        value=""
+        onChange={(e) => {
+          const picked = extractEmoji(e.target.value);
+          if (picked) onPick(picked);
+          (e.target as HTMLInputElement).value = "";
+        }}
+        placeholder="🙂"
+        aria-label="Indtast en emoji"
+        className="w-16 text-2xl text-center bg-cream-50 border-2 border-transparent focus:border-brand-400 outline-none rounded-2xl py-2 transition-colors"
+      />
+    </div>
+  );
+}
+
 export function TaskEditor({ profileId, slot, weekday, taskId }: TaskEditorProps) {
   const { profile, routineTasks, setRoutineTasks, goBack, pushToast } = useApp();
   const p = profile(profileId);
@@ -150,6 +191,12 @@ export function TaskEditor({ profileId, slot, weekday, taskId }: TaskEditorProps
               className="w-full bg-white border-2 border-ink-100 focus:border-brand-400 outline-none rounded-2xl px-5 py-3 text-base text-ink-900 placeholder:text-ink-300 shadow-soft transition-colors"
             />
           </div>
+          <CustomEmojiInput
+            currentEmoji={emoji}
+            onPick={(e) => { setEmoji(e); setArasaacId(null); setArasaacInput(""); setShowArasaac(false); }}
+            accentRing={t.ring}
+            accentSoft={t.bgSoft}
+          />
           {!searchResults && (
             <div className="flex gap-2 overflow-x-auto -mx-5 px-5 py-1 scrollbar-none">
               {(Object.keys(EMOJI_CATEGORIES) as EmojiCategory[]).map((cat) => (
@@ -206,9 +253,9 @@ export function TaskEditor({ profileId, slot, weekday, taskId }: TaskEditorProps
                 <div className="shrink-0 w-9 h-9 rounded-full bg-brand-600 text-white flex items-center justify-center font-black text-base" aria-hidden>i</div>
                 <div className="flex-1 text-sm text-ink-700 leading-relaxed">
                   <p className="font-bold mb-1 text-ink-900">Sådan finder du et piktogram</p>
-                  <ol className="list-decimal pl-4 space-y-0.5">
-                    <li>Åbn <span className="font-semibold">arasaac.org</span> i en browser</li>
-                    <li>Søg fx på "tandbørste"</li>
+                  <ol className="list-decimal pl-4 space-y-1">
+                    <li>Åbn <span className="font-mono bg-white px-1.5 rounded text-xs">arasaac.org/pictograms/search</span></li>
+                    <li>Søg på <span className="font-semibold">engelsk</span> (fx <span className="italic">toothbrush</span>) — dansk virker ikke endnu</li>
                     <li>Klik på et billede du kan lide</li>
                     <li>Kopier tallet fra adresselinjen (fx <span className="font-mono bg-white px-1.5 rounded">2087</span>)</li>
                     <li>Indsæt tallet herunder</li>
@@ -235,7 +282,7 @@ export function TaskEditor({ profileId, slot, weekday, taskId }: TaskEditorProps
                 )}
               </div>
               {arasaacError && (
-                <p className="text-bad-500 text-sm font-semibold">Det ID gav ikke noget billede. Tjek tallet på arasaac.org.</p>
+                <p className="text-bad-500 text-sm font-semibold">Det ID gav ikke noget billede. Tjek tallet på arasaac.org/pictograms/search.</p>
               )}
             </div>
           )}

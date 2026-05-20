@@ -8,9 +8,9 @@ interface TemplateEntry {
 
 const MORNING_TEMPLATE: TemplateEntry[] = [
   { label: "Stå op", emoji: "🛏️", arasaacId: null },
-  { label: "Tisse af", emoji: "🚽", arasaacId: 38625 },
+  { label: "Tisse af", emoji: "🚽", arasaacId: null },
   { label: "Spise morgenmad", emoji: "🥣", arasaacId: null },
-  { label: "Børste tænder", emoji: "🪥", arasaacId: 2087 },
+  { label: "Børste tænder", emoji: "🪥", arasaacId: null },
   { label: "Tage tøj på", emoji: "👕", arasaacId: null },
   { label: "Pakke taske", emoji: "🎒", arasaacId: null },
 ];
@@ -18,11 +18,11 @@ const MORNING_TEMPLATE: TemplateEntry[] = [
 const EVENING_TEMPLATE: TemplateEntry[] = [
   { label: "Spise aftensmad", emoji: "🍽️", arasaacId: null },
   { label: "Lege", emoji: "🧸", arasaacId: null },
-  { label: "Tisse af", emoji: "🚽", arasaacId: 38625 },
+  { label: "Tisse af", emoji: "🚽", arasaacId: null },
   { label: "Tage nattøj på", emoji: "🛌", arasaacId: null },
-  { label: "Børste tænder", emoji: "🪥", arasaacId: 2087 },
+  { label: "Børste tænder", emoji: "🪥", arasaacId: null },
   { label: "Læse bog", emoji: "📖", arasaacId: null },
-  { label: "Sove", emoji: "😴", arasaacId: 2369 },
+  { label: "Sove", emoji: "😴", arasaacId: null },
 ];
 
 function genId(): string {
