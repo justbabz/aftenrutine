@@ -1,30 +1,47 @@
-import { useChecklist } from "./hooks/useChecklist";
-import { ChecklistGrid } from "./components/ChecklistGrid";
-import { CelebrationOverlay } from "./components/CelebrationOverlay";
+import { AppProvider, useApp } from "./state/AppContext";
+
+function Placeholder({ title }: { title: string }) {
+  const { goBack } = useApp();
+  return (
+    <div className="min-h-screen bg-purple-50 flex flex-col items-center justify-center p-6 gap-4">
+      <h1 className="text-2xl font-bold text-purple-700">{title}</h1>
+      <p className="text-purple-600 text-sm">Skærm under opbygning</p>
+      <button
+        onClick={goBack}
+        className="bg-purple-600 text-white px-6 py-3 rounded-2xl font-semibold"
+      >
+        Tilbage
+      </button>
+    </div>
+  );
+}
+
+function Router() {
+  const { screen } = useApp();
+  switch (screen.kind) {
+    case "setup-wizard":
+      return <Placeholder title="Velkommen" />;
+    case "picker":
+      return <Placeholder title="Profilvælger" />;
+    case "routine":
+      return <Placeholder title={`Rutine: ${screen.slot}`} />;
+    case "admin-auth":
+      return <Placeholder title="Tast PIN" />;
+    case "admin-home":
+      return <Placeholder title="Admin" />;
+    case "admin-profile":
+      return <Placeholder title="Rediger barn" />;
+    case "admin-routine":
+      return <Placeholder title="Rediger rutine" />;
+    case "admin-task":
+      return <Placeholder title="Rediger opgave" />;
+  }
+}
 
 export default function App() {
-  const { checked, toggle, reset, allDone } = useChecklist();
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-purple-600 text-white py-4 px-5 flex items-center justify-between shadow-md">
-        <h1 className="text-2xl font-bold tracking-tight">🌙 Aftenrutine</h1>
-        <button
-          onClick={reset}
-          className="text-purple-200 text-sm underline underline-offset-2 active:text-white"
-          aria-label="Nulstil tjeklisten"
-        >
-          Nulstil
-        </button>
-      </header>
-
-      {/* Indhold */}
-      <main className="flex-1 p-4 max-w-lg mx-auto w-full">
-        <ChecklistGrid checked={checked} onToggle={toggle} />
-      </main>
-
-      {allDone && <CelebrationOverlay onReset={reset} />}
-    </div>
+    <AppProvider>
+      <Router />
+    </AppProvider>
   );
 }
