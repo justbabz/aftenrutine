@@ -5,6 +5,7 @@ import { themeFor } from "../styles/theme";
 import { AvatarPicker, AVATAR_EMOJIS } from "./AvatarPicker";
 import { ColorPicker } from "./ColorPicker";
 import { PinSetup } from "./PinSetup";
+import { CloudSyncPanel } from "./CloudSyncPanel";
 
 export function AdminScreen() {
   const { config, goto, lockAdmin, addProfile, pushToast } = useApp();
@@ -55,11 +56,42 @@ export function AdminScreen() {
 
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-bold text-ink-700 px-1">App</h2>
+          <CloudSyncRow />
           <ChangePinRow />
           <DangerZone />
         </section>
       </main>
     </div>
+  );
+}
+
+function CloudSyncRow() {
+  const { sync, cloudAvailable } = useApp();
+  const [open, setOpen] = useState(false);
+
+  if (open) return <CloudSyncPanel onClose={() => setOpen(false)} />;
+
+  const status = sync.kind === "off" ? "Ikke slået til" :
+    sync.kind === "error" ? "Sync-fejl" :
+    sync.kind === "syncing" ? "Synkroniserer..." :
+    "Aktiv";
+
+  return (
+    <button
+      onClick={() => setOpen(true)}
+      className="bg-white rounded-3xl shadow-soft p-4 flex items-center justify-between text-left active:scale-[0.98] transition-transform"
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-xl ${sync.kind === "off" ? "bg-ink-100" : sync.kind === "error" ? "bg-bad-soft" : "bg-good-soft"}`} aria-hidden>
+          ☁️
+        </div>
+        <div className="min-w-0">
+          <div className="font-semibold text-ink-900">Sky-sync mellem enheder</div>
+          <div className="text-xs text-ink-500 truncate">{cloudAvailable ? status : "Ikke konfigureret"}</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" className="w-5 h-5 text-ink-300 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
   );
 }
 

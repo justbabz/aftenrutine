@@ -7,6 +7,7 @@ import {
   useMemo,
   useReducer,
   useRef,
+  useState,
 } from "react";
 import {
   AppConfig,
@@ -36,6 +37,18 @@ import {
   saveConfig,
   todayKey,
 } from "../storage";
+import {
+  cloudConfigured,
+  configToPayload,
+  fetchFamily,
+  generateFamilyId,
+  loadSyncSettings,
+  payloadIntoConfig,
+  pushFamily,
+  saveSyncSettings,
+  subscribeFamily,
+  SyncSettings,
+} from "../sync/cloud";
 
 export type Screen =
   | { kind: "setup-wizard" }
@@ -200,7 +213,20 @@ interface AppContextValue {
   isDone(profileId: string, slot: RoutineSlot, taskId: string): boolean;
   countDone(profileId: string, slot: RoutineSlot, weekday?: Weekday): { done: number; total: number };
   todayWeekday(): Weekday;
+
+  // Cloud sync
+  cloudAvailable: boolean;
+  sync: SyncState;
+  enableSyncWithNew(deviceName: string): Promise<string>;
+  enableSyncWithExisting(familyId: string, deviceName: string, mode: "replace-local" | "push-local"): Promise<void>;
+  disableSync(): void;
 }
+
+export type SyncState =
+  | { kind: "off" }
+  | { kind: "idle"; familyId: string; deviceName: string; lastSynced: string | null }
+  | { kind: "syncing"; familyId: string; deviceName: string; lastSynced: string | null }
+  | { kind: "error"; familyId: string; deviceName: string; lastSynced: string | null; message: string };
 
 const AppContext = createContext<AppContextValue | null>(null);
 
@@ -212,6 +238,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, initialState);
   const stateRef = useRef(state);
   stateRef.current = state;
+
+  const [sync, setSync] = useState<SyncState>(() => {
+    if (!cloudConfigured) return { kind: "off" };
+    const settings = loadSyncSettings();
+    if (!settings) return { kind: "off" };
+    return { kind: "idle", familyId: settings.familyId, deviceName: settings.deviceName, lastSynced: null };
+  });
+  const syncRef = useRef(sync);
+  syncRef.current = sync;
+
+  const remoteUpdatedAtRef = useRef<string | null>(null);
+  const suppressNextPushRef = useRef(false);
+  const initialPullDoneRef = useRef(false);
 
   useEffect(() => {
     saveConfig(state.config);
@@ -445,6 +484,136 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const todayWeekday = useCallback(() => weekdayFromDate(), []);
 
+  // ---------- Cloud sync ----------
+
+  const setSyncSettings = useCallback((settings: SyncSettings | null) => {
+    saveSyncSettings(settings);
+    if (!settings) setSync({ kind: "off" });
+  }, []);
+
+  const enableSyncWithNew = useCallback(async (deviceName: string): Promise<string> => {
+    const id = generateFamilyId();
+    setSync({ kind: "syncing", familyId: id, deviceName, lastSynced: null });
+    try {
+      const payload = configToPayload(stateRef.current.config);
+      const updatedAt = await pushFamily(id, payload, deviceName);
+      remoteUpdatedAtRef.current = updatedAt;
+      setSyncSettings({ familyId: id, deviceName });
+      setSync({ kind: "idle", familyId: id, deviceName, lastSynced: updatedAt });
+      return id;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Ukendt fejl";
+      setSync({ kind: "error", familyId: id, deviceName, lastSynced: null, message: msg });
+      throw e;
+    }
+  }, [setSyncSettings]);
+
+  const enableSyncWithExisting = useCallback(async (
+    rawId: string,
+    deviceName: string,
+    mode: "replace-local" | "push-local",
+  ): Promise<void> => {
+    const id = rawId.trim();
+    setSync({ kind: "syncing", familyId: id, deviceName, lastSynced: null });
+    try {
+      if (mode === "replace-local") {
+        const row = await fetchFamily(id);
+        if (!row) {
+          // No remote row → create from local
+          const payload = configToPayload(stateRef.current.config);
+          const updatedAt = await pushFamily(id, payload, deviceName);
+          remoteUpdatedAtRef.current = updatedAt;
+        } else {
+          suppressNextPushRef.current = true;
+          dispatch({ type: "SET_CONFIG", config: payloadIntoConfig(row.payload, stateRef.current.config) });
+          remoteUpdatedAtRef.current = row.updatedAt;
+        }
+      } else {
+        const payload = configToPayload(stateRef.current.config);
+        const updatedAt = await pushFamily(id, payload, deviceName);
+        remoteUpdatedAtRef.current = updatedAt;
+      }
+      setSyncSettings({ familyId: id, deviceName });
+      setSync({ kind: "idle", familyId: id, deviceName, lastSynced: remoteUpdatedAtRef.current });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Ukendt fejl";
+      setSync({ kind: "error", familyId: id, deviceName, lastSynced: null, message: msg });
+      throw e;
+    }
+  }, [setSyncSettings]);
+
+  const disableSync = useCallback(() => {
+    setSyncSettings(null);
+    remoteUpdatedAtRef.current = null;
+    initialPullDoneRef.current = false;
+  }, [setSyncSettings]);
+
+  // Initial pull on mount or when sync turns on.
+  useEffect(() => {
+    if (sync.kind === "off") {
+      initialPullDoneRef.current = false;
+      return;
+    }
+    if (initialPullDoneRef.current) return;
+    initialPullDoneRef.current = true;
+    let cancelled = false;
+    (async () => {
+      try {
+        const row = await fetchFamily(sync.familyId);
+        if (cancelled) return;
+        if (row) {
+          suppressNextPushRef.current = true;
+          dispatch({ type: "SET_CONFIG", config: payloadIntoConfig(row.payload, stateRef.current.config) });
+          remoteUpdatedAtRef.current = row.updatedAt;
+          setSync((s) => s.kind === "off" ? s : { kind: "idle", familyId: s.familyId, deviceName: s.deviceName, lastSynced: row.updatedAt });
+        }
+      } catch (e) {
+        if (cancelled) return;
+        const msg = e instanceof Error ? e.message : "Sync-fejl";
+        setSync((s) => s.kind === "off" ? s : { kind: "error", familyId: s.familyId, deviceName: s.deviceName, lastSynced: s.lastSynced, message: msg });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [sync.kind === "off" ? "off" : sync.familyId]);
+
+  // Realtime subscription.
+  useEffect(() => {
+    if (sync.kind === "off") return;
+    const familyId = sync.familyId;
+    const handle = subscribeFamily(familyId, (row) => {
+      if (row.updatedAt === remoteUpdatedAtRef.current) return;
+      suppressNextPushRef.current = true;
+      dispatch({ type: "SET_CONFIG", config: payloadIntoConfig(row.payload, stateRef.current.config) });
+      remoteUpdatedAtRef.current = row.updatedAt;
+      setSync((s) => s.kind === "off" ? s : { kind: "idle", familyId: s.familyId, deviceName: s.deviceName, lastSynced: row.updatedAt });
+    });
+    return () => handle.unsubscribe();
+  }, [sync.kind === "off" ? "off" : sync.familyId]);
+
+  // Push local config changes to cloud (debounced).
+  useEffect(() => {
+    if (sync.kind === "off") return;
+    if (suppressNextPushRef.current) {
+      suppressNextPushRef.current = false;
+      return;
+    }
+    const familyId = sync.familyId;
+    const deviceName = sync.deviceName;
+    const timer = window.setTimeout(async () => {
+      try {
+        setSync((s) => s.kind === "off" ? s : { kind: "syncing", familyId: s.familyId, deviceName: s.deviceName, lastSynced: s.lastSynced });
+        const payload = configToPayload(stateRef.current.config);
+        const updatedAt = await pushFamily(familyId, payload, deviceName);
+        remoteUpdatedAtRef.current = updatedAt;
+        setSync((s) => s.kind === "off" ? s : { kind: "idle", familyId: s.familyId, deviceName: s.deviceName, lastSynced: updatedAt });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Sync-fejl";
+        setSync((s) => s.kind === "off" ? s : { kind: "error", familyId: s.familyId, deviceName: s.deviceName, lastSynced: s.lastSynced, message: msg });
+      }
+    }, 1500);
+    return () => window.clearTimeout(timer);
+  }, [state.config, sync.kind === "off" ? "off" : sync.familyId, sync.kind === "off" ? "" : sync.deviceName]);
+
   const value = useMemo<AppContextValue>(() => ({
     config: state.config,
     checks: state.checks,
@@ -475,6 +644,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     isDone,
     countDone,
     todayWeekday,
+    cloudAvailable: cloudConfigured,
+    sync,
+    enableSyncWithNew,
+    enableSyncWithExisting,
+    disableSync,
   }), [
     state.config, state.checks, state.screen, state.adminUnlocked, state.toasts, state.today,
     goto, goBack, replaceScreen, toggleTask, resetRoutine,
@@ -482,6 +656,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addProfile, updateProfile, deleteProfile, setRoutineTasks, copyRoutineToDays,
     pushToast, dismissToast, reportActivity,
     routineTasks, profile, isDone, countDone, todayWeekday,
+    sync, enableSyncWithNew, enableSyncWithExisting, disableSync,
   ]);
 
   return (
