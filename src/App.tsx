@@ -9,6 +9,7 @@ import { RoutineEditor } from "./components/RoutineEditor";
 import { TaskEditor } from "./components/TaskEditor";
 import { ToastHost } from "./components/ToastHost";
 import { UpdatePrompt } from "./components/UpdatePrompt";
+import { JoinInviteOverlay } from "./components/JoinInviteOverlay";
 
 function Router() {
   const { screen } = useApp();
@@ -38,6 +39,7 @@ export default function App() {
       <Router />
       <ToastHost />
       <UpdatePrompt />
+      <JoinInviteOverlay />
     </AppProvider>
   );
 }

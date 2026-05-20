@@ -58,6 +58,29 @@ export function normalizeFamilyId(input: string): string {
   return input.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
 }
 
+export function defaultDeviceName(): string {
+  if (typeof navigator === "undefined") return "Enhed";
+  const ua = navigator.userAgent;
+  if (/iPad/.test(ua)) return "iPad";
+  if (/iPhone/.test(ua)) return "iPhone";
+  if (/Android/.test(ua)) return "Android";
+  if (/Mac/.test(ua)) return "Mac";
+  if (/Windows/.test(ua)) return "Windows";
+  return "Enhed";
+}
+
+export function buildInviteUrl(familyId: string): string {
+  if (typeof window === "undefined") return "";
+  return `${window.location.origin}${window.location.pathname}#join=${familyId}`;
+}
+
+export function parseInviteCode(hash: string): string | null {
+  const match = hash.match(/[#&]join=([A-Z0-9]+)/i);
+  if (!match) return null;
+  const normalized = normalizeFamilyId(match[1]);
+  return normalized || null;
+}
+
 export type SyncPayload = {
   profiles: Profile[];
   pin: AppConfig["pin"];

@@ -4,18 +4,9 @@ import { ProfileColor } from "../data/types";
 import { PinSetup } from "./PinSetup";
 import { AvatarPicker, AVATAR_EMOJIS } from "./AvatarPicker";
 import { ColorPicker } from "./ColorPicker";
-import { normalizeFamilyId } from "../sync/cloud";
+import { defaultDeviceName, normalizeFamilyId } from "../sync/cloud";
 
 type Stage = "welcome" | "choose" | "join" | "pin" | "child";
-
-function defaultDeviceName(): string {
-  const ua = navigator.userAgent;
-  if (/iPad/.test(ua)) return "iPad";
-  if (/iPhone/.test(ua)) return "iPhone";
-  if (/Android/.test(ua)) return "Android";
-  if (/Mac/.test(ua)) return "Mac";
-  return "Enhed";
-}
 
 export function SetupWizard() {
   const { setPin, addProfile, replaceScreen, cloudAvailable, enableSyncWithExisting, pushToast } = useApp();
