@@ -2,7 +2,10 @@ export type RoutineSlot = "morning" | "evening";
 
 export const ROUTINE_SLOTS: RoutineSlot[] = ["morning", "evening"];
 
-export const PROFILE_COLORS = ["lilac", "berry", "sky", "mint", "sunset", "citrus"] as const;
+export const PROFILE_COLORS = [
+  "ruby", "sunset", "amber", "citrus", "mint", "sky",
+  "ocean", "lilac", "plum", "berry", "cocoa", "slate",
+] as const;
 export type ProfileColor = (typeof PROFILE_COLORS)[number];
 
 export interface Task {

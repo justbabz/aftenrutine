@@ -56,8 +56,57 @@ export function AdminScreen() {
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-bold text-ink-700 px-1">App</h2>
           <ChangePinRow />
+          <DangerZone />
         </section>
       </main>
+    </div>
+  );
+}
+
+function DangerZone() {
+  const { resetEverything } = useApp();
+  const [open, setOpen] = useState(false);
+  const [confirm, setConfirm] = useState("");
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="bg-white rounded-3xl shadow-soft p-4 flex items-center justify-between text-left active:scale-[0.98] transition-transform"
+      >
+        <span className="font-semibold text-ink-700">Nulstil hele appen</span>
+        <svg viewBox="0 0 24 24" className="w-5 h-5 text-ink-300" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-3xl shadow-soft p-5 flex flex-col gap-3 animate-fade-up">
+      <p className="text-ink-700 text-sm">
+        Sletter alle børn, opgaver og kode. Skriv <span className="font-bold">NULSTIL</span> for at bekræfte.
+      </p>
+      <input
+        type="text"
+        value={confirm}
+        onChange={(e) => setConfirm(e.target.value)}
+        placeholder="NULSTIL"
+        className="bg-cream-100 border-2 border-ink-100 focus:border-bad-500 outline-none rounded-2xl px-4 py-3 text-ink-900 placeholder:text-ink-300 font-semibold transition-colors"
+      />
+      <div className="flex gap-2">
+        <button
+          onClick={() => { setOpen(false); setConfirm(""); }}
+          className="flex-1 bg-ink-100 text-ink-700 font-bold py-3 rounded-2xl active:scale-95 transition-transform"
+        >
+          Fortryd
+        </button>
+        <button
+          onClick={() => { if (confirm.trim().toUpperCase() === "NULSTIL") resetEverything(); }}
+          disabled={confirm.trim().toUpperCase() !== "NULSTIL"}
+          className="flex-1 bg-bad-500 text-white font-bold py-3 rounded-2xl active:scale-95 transition-transform disabled:bg-ink-200 disabled:text-ink-400"
+        >
+          Slet alt
+        </button>
+      </div>
     </div>
   );
 }

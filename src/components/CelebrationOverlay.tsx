@@ -11,12 +11,18 @@ interface CelebrationOverlayProps {
 }
 
 const PALETTE: Record<ProfileColor, string[]> = {
-  lilac:  ["#A855F7", "#C084FC", "#7C3AED", "#F0ABFC"],
-  berry:  ["#EC4899", "#F472B6", "#DB2777", "#FBCFE8"],
-  sky:    ["#0EA5E9", "#38BDF8", "#0284C7", "#BAE6FD"],
-  mint:   ["#10B981", "#34D399", "#059669", "#A7F3D0"],
+  ruby:   ["#EF4444", "#F87171", "#DC2626", "#FECACA"],
   sunset: ["#F97316", "#FB923C", "#EA580C", "#FED7AA"],
+  amber:  ["#F59E0B", "#FBBF24", "#D97706", "#FDE68A"],
   citrus: ["#84CC16", "#A3E635", "#65A30D", "#D9F99D"],
+  mint:   ["#10B981", "#34D399", "#059669", "#A7F3D0"],
+  sky:    ["#0EA5E9", "#38BDF8", "#0284C7", "#BAE6FD"],
+  ocean:  ["#2563EB", "#60A5FA", "#1D4ED8", "#BFDBFE"],
+  lilac:  ["#A855F7", "#C084FC", "#7C3AED", "#F0ABFC"],
+  plum:   ["#7C3AED", "#A78BFA", "#6D28D9", "#DDD6FE"],
+  berry:  ["#EC4899", "#F472B6", "#DB2777", "#FBCFE8"],
+  cocoa:  ["#854D3F", "#A78680", "#6B3D33", "#E7D7CF"],
+  slate:  ["#475569", "#64748B", "#334155", "#CBD5E1"],
 };
 
 function prefersReducedMotion(): boolean {

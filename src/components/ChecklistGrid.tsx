@@ -36,16 +36,32 @@ export function ChecklistGrid({ tasks, done, onToggle, color }: ChecklistGridPro
           <p className="text-ink-500">En voksen kan tilføje opgaver i forælder-indstillinger.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              done={done(task.id)}
-              color={color}
-              onToggle={() => onToggle(task.id)}
-            />
-          ))}
+        <div
+          className="-mx-4 px-4 overflow-x-auto snap-x snap-mandatory scrollbar-none"
+          style={{ scrollbarWidth: "none" }}
+        >
+          <ol className="flex gap-3 items-stretch w-max min-w-full justify-center">
+            {tasks.map((task, idx) => (
+              <li
+                key={task.id}
+                className="snap-center shrink-0 flex flex-col items-center gap-1"
+                style={{ width: "clamp(120px, 16vw, 180px)" }}
+              >
+                <span
+                  className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-white shadow-soft text-ink-500 text-xs font-bold"
+                  aria-hidden
+                >
+                  {idx + 1}
+                </span>
+                <TaskCard
+                  task={task}
+                  done={done(task.id)}
+                  color={color}
+                  onToggle={() => onToggle(task.id)}
+                />
+              </li>
+            ))}
+          </ol>
         </div>
       )}
     </div>

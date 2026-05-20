@@ -1,6 +1,20 @@
+const PROFILE_COLORS = [
+  "ruby", "sunset", "amber", "citrus", "mint", "sky",
+  "ocean", "lilac", "plum", "berry", "cocoa", "slate",
+];
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
+  safelist: [
+    ...PROFILE_COLORS.flatMap((c) => [
+      `bg-${c}-400`, `bg-${c}-500`, `bg-${c}-600`, `bg-${c}-soft`,
+      `text-${c}-500`, `text-${c}-600`,
+      `ring-${c}-500`,
+      `from-${c}-400`, `to-${c}-600`,
+      `border-${c}-500`,
+    ]),
+  ],
   theme: {
     extend: {
       colors: {
@@ -29,12 +43,18 @@ export default {
           700: "#4B22AD",
           800: "#371880",
         },
+        ruby:   { 400: "#F87171", 500: "#EF4444", 600: "#DC2626", soft: "#FEDDDD" },
         sunset: { 400: "#FB923C", 500: "#F97316", 600: "#EA580C", soft: "#FFE7D5" },
-        sky:    { 400: "#38BDF8", 500: "#0EA5E9", 600: "#0284C7", soft: "#D4F0FB" },
-        mint:   { 400: "#34D399", 500: "#10B981", 600: "#059669", soft: "#D1F5E5" },
-        berry:  { 400: "#F472B6", 500: "#EC4899", 600: "#DB2777", soft: "#FCDCEB" },
-        lilac:  { 400: "#C084FC", 500: "#A855F7", 600: "#9333EA", soft: "#EFDFFE" },
+        amber:  { 400: "#FBBF24", 500: "#F59E0B", 600: "#D97706", soft: "#FFEDC2" },
         citrus: { 400: "#A3E635", 500: "#84CC16", 600: "#65A30D", soft: "#E6F4C8" },
+        mint:   { 400: "#34D399", 500: "#10B981", 600: "#059669", soft: "#D1F5E5" },
+        sky:    { 400: "#38BDF8", 500: "#0EA5E9", 600: "#0284C7", soft: "#D4F0FB" },
+        ocean:  { 400: "#60A5FA", 500: "#2563EB", 600: "#1D4ED8", soft: "#DBEAFE" },
+        lilac:  { 400: "#C084FC", 500: "#A855F7", 600: "#9333EA", soft: "#EFDFFE" },
+        plum:   { 400: "#A78BFA", 500: "#7C3AED", 600: "#6D28D9", soft: "#EDE4FF" },
+        berry:  { 400: "#F472B6", 500: "#EC4899", 600: "#DB2777", soft: "#FCDCEB" },
+        cocoa:  { 400: "#A78680", 500: "#854D3F", 600: "#6B3D33", soft: "#EBDDD7" },
+        slate:  { 400: "#64748B", 500: "#475569", 600: "#334155", soft: "#E2E8F0" },
         good:   { 500: "#16A34A", 600: "#15803D", soft: "#D6F5E0" },
         warn:   { 500: "#F59E0B", soft: "#FFEDC2" },
         bad:    { 500: "#DC2626", soft: "#FCDCDC" },

@@ -176,6 +176,7 @@ interface AppContextValue {
 
   setPin(pin: string): Promise<void>;
   tryUnlockAdmin(pin: string): Promise<{ ok: true } | { ok: false; lockedUntil: number | null; failedAttempts: number }>;
+  unlockAdmin(): void;
   lockAdmin(): void;
   resetEverything(): void;
 
@@ -318,6 +319,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [writeConfig]);
 
   const lockAdmin = useCallback(() => dispatch({ type: "ADMIN_LOCK" }), []);
+  const unlockAdmin = useCallback(() => dispatch({ type: "ADMIN_UNLOCK" }), []);
 
   const resetEverything = useCallback(() => {
     dispatch({ type: "SET_CONFIG", config: emptyConfig() });
@@ -423,6 +425,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     resetRoutine,
     setPin,
     tryUnlockAdmin,
+    unlockAdmin,
     lockAdmin,
     resetEverything,
     addProfile,
@@ -439,7 +442,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }), [
     state.config, state.checks, state.screen, state.adminUnlocked, state.toasts, state.today,
     goto, goBack, replaceScreen, toggleTask, resetRoutine,
-    setPin, tryUnlockAdmin, lockAdmin, resetEverything,
+    setPin, tryUnlockAdmin, unlockAdmin, lockAdmin, resetEverything,
     addProfile, updateProfile, deleteProfile, setRoutineTasks,
     pushToast, dismissToast, reportActivity,
     routineTasks, profile, isDone, countDone,

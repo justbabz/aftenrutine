@@ -197,10 +197,20 @@ export function TaskEditor({ profileId, slot, taskId }: TaskEditorProps) {
             <svg viewBox="0 0 24 24" className={`w-5 h-5 text-ink-400 transition-transform ${showArasaac ? "rotate-90" : ""}`} fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
           {showArasaac && (
-            <div className="bg-white rounded-3xl shadow-soft p-4 flex flex-col gap-3 animate-fade-up">
-              <p className="text-sm text-ink-500">
-                Find et symbol på <span className="font-semibold text-ink-700">arasaac.org</span> og kopier tallet fra URL'en herind.
-              </p>
+            <div className="bg-white rounded-3xl shadow-soft p-4 flex flex-col gap-4 animate-fade-up">
+              <div className="bg-brand-50 rounded-2xl p-4 flex gap-3">
+                <div className="shrink-0 w-9 h-9 rounded-full bg-brand-600 text-white flex items-center justify-center font-black text-base" aria-hidden>i</div>
+                <div className="flex-1 text-sm text-ink-700 leading-relaxed">
+                  <p className="font-bold mb-1 text-ink-900">Sådan finder du et piktogram</p>
+                  <ol className="list-decimal pl-4 space-y-0.5">
+                    <li>Åbn <span className="font-semibold">arasaac.org</span> i en browser</li>
+                    <li>Søg fx på "tandbørste"</li>
+                    <li>Klik på et billede du kan lide</li>
+                    <li>Kopier tallet fra adresselinjen (fx <span className="font-mono bg-white px-1.5 rounded">2087</span>)</li>
+                    <li>Indsæt tallet herunder</li>
+                  </ol>
+                </div>
+              </div>
               <div className="flex items-center gap-2">
                 <input
                   type="text"
@@ -208,7 +218,7 @@ export function TaskEditor({ profileId, slot, taskId }: TaskEditorProps) {
                   pattern="\d*"
                   value={arasaacInput}
                   onChange={(e) => applyArasaacInput(e.target.value)}
-                  placeholder="Fx 2369"
+                  placeholder="Fx 2087"
                   className="flex-1 bg-cream-100 border-2 border-transparent focus:border-brand-400 outline-none rounded-2xl px-4 py-3 text-base font-bold text-ink-900 placeholder:text-ink-300 transition-colors"
                 />
                 {arasaacId !== null && (

@@ -55,13 +55,13 @@ export function RoutineView({ profileId, slot }: RoutineViewProps) {
         <h1 className="text-3xl font-black leading-tight drop-shadow-sm">{p.name}</h1>
         <p className="text-white/90 text-base mt-0.5">{meta.subtitle}</p>
 
-        <div className="mt-4 bg-white/15 backdrop-blur p-1 rounded-2xl flex">
+        <div className="mt-5 bg-white/15 backdrop-blur p-1.5 rounded-3xl flex gap-1.5">
           <SlotTab label="Morgen" icon="🌅" active={slot === "morning"} onClick={() => switchSlot("morning")} />
           <SlotTab label="Aften" icon="🌙" active={slot === "evening"} onClick={() => switchSlot("evening")} />
         </div>
       </header>
 
-      <main className="flex-1 px-4 py-5 max-w-lg mx-auto w-full">
+      <main className="flex-1 px-4 py-6 w-full">
         <ChecklistGrid
           tasks={tasks}
           done={(id) => isDone(profileId, slot, id)}
@@ -87,10 +87,10 @@ function SlotTab({ label, icon, active, onClick }: { label: string; icon: string
     <button
       onClick={onClick}
       aria-pressed={active}
-      className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-base transition-all duration-200
-        ${active ? "bg-white text-ink-900 shadow-soft" : "text-white/90"}`}
+      className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-xl transition-all duration-200 active:scale-[0.97]
+        ${active ? "bg-white text-ink-900 shadow-lift" : "text-white/90 hover:bg-white/10"}`}
     >
-      <span aria-hidden>{icon}</span>
+      <span className="text-3xl" aria-hidden>{icon}</span>
       <span>{label}</span>
     </button>
   );

@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { useApp } from "../state/AppContext";
 import { PinPad } from "./PinPad";
+import { PinRecovery } from "./PinRecovery";
 
 export function AdminAuth() {
-  const { tryUnlockAdmin, replaceScreen, goBack, config, resetEverything } = useApp();
+  const { tryUnlockAdmin, replaceScreen, goBack, config } = useApp();
   const [value, setValue] = useState("");
   const [shake, setShake] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lockedUntil, setLockedUntil] = useState<number | null>(config.lockedUntil);
   const [now, setNow] = useState(() => Date.now());
-  const [confirmReset, setConfirmReset] = useState("");
-  const [showReset, setShowReset] = useState(false);
+  const [showRecovery, setShowRecovery] = useState(false);
 
   useEffect(() => {
     const t = window.setInterval(() => setNow(Date.now()), 1000);
@@ -35,12 +35,6 @@ export function AdminAuth() {
       setShake(false);
       setValue("");
     }, 500);
-  };
-
-  const tryReset = () => {
-    if (confirmReset.trim().toUpperCase() === "NULSTIL") {
-      resetEverything();
-    }
   };
 
   return (
@@ -74,42 +68,18 @@ export function AdminAuth() {
           <div className="text-bad-500 font-semibold animate-fade-up">{error}</div>
         )}
 
-        {!showReset ? (
+        {!showRecovery ? (
           <button
-            onClick={() => setShowReset(true)}
-            className="text-ink-400 text-sm underline underline-offset-4 mt-2"
+            onClick={() => setShowRecovery(true)}
+            className="text-ink-400 text-sm underline underline-offset-4 mt-2 active:text-ink-700"
           >
             Glemt koden?
           </button>
         ) : (
-          <div className="bg-white rounded-3xl shadow-soft p-5 w-full flex flex-col gap-3 animate-fade-up">
-            <p className="text-ink-700 text-sm">
-              Glemt koden? Du kan nulstille hele appen — alle børn, opgaver og indstillinger slettes.
-              Skriv <span className="font-bold">NULSTIL</span> for at bekræfte.
-            </p>
-            <input
-              type="text"
-              value={confirmReset}
-              onChange={(e) => setConfirmReset(e.target.value)}
-              placeholder="NULSTIL"
-              className="bg-cream-100 border-2 border-ink-100 focus:border-bad-500 outline-none rounded-2xl px-4 py-3 text-ink-900 placeholder:text-ink-300 font-semibold transition-colors"
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={() => { setShowReset(false); setConfirmReset(""); }}
-                className="flex-1 bg-ink-100 text-ink-700 font-bold py-3 rounded-2xl active:scale-95 transition-transform"
-              >
-                Fortryd
-              </button>
-              <button
-                onClick={tryReset}
-                disabled={confirmReset.trim().toUpperCase() !== "NULSTIL"}
-                className="flex-1 bg-bad-500 text-white font-bold py-3 rounded-2xl active:scale-95 transition-transform disabled:bg-ink-200 disabled:text-ink-400"
-              >
-                Nulstil alt
-              </button>
-            </div>
-          </div>
+          <PinRecovery
+            onCancel={() => setShowRecovery(false)}
+            onDone={() => { setShowRecovery(false); replaceScreen({ kind: "admin-home" }); }}
+          />
         )}
       </div>
     </div>
