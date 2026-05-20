@@ -162,7 +162,6 @@ export function RoutineEditor({ profileId, slot, weekday }: RoutineEditorProps) 
             task={task}
             isFirst={idx === 0}
             isLast={idx === tasks.length - 1}
-            colorAccent={t.text}
             onEdit={() => goto({ kind: "admin-task", profileId, slot, weekday, taskId: task.id })}
             onUp={() => move(task.id, -1)}
             onDown={() => move(task.id, 1)}
@@ -239,29 +238,39 @@ export function RoutineEditor({ profileId, slot, weekday }: RoutineEditorProps) 
 }
 
 function TaskRow({
-  task, isFirst, isLast, colorAccent, onEdit, onUp, onDown, onDelete,
+  task, isFirst, isLast, onEdit, onUp, onDown, onDelete,
 }: {
   task: Task;
   isFirst: boolean;
   isLast: boolean;
-  colorAccent: string;
   onEdit: () => void;
   onUp: () => void;
   onDown: () => void;
   onDelete: () => void;
 }) {
+  const [imgError, setImgError] = useState(false);
+  const showImage = task.arasaacId !== null && !imgError;
   return (
     <div className="bg-white rounded-3xl shadow-soft p-3 flex items-center gap-2">
       <button
         onClick={onEdit}
         className="flex-1 flex items-center gap-3 text-left p-2 rounded-2xl active:bg-cream-100 transition-colors"
       >
-        <div className="w-12 h-12 rounded-2xl bg-cream-100 flex items-center justify-center text-2xl shrink-0" aria-hidden>{task.emoji}</div>
+        <div className="w-12 h-12 rounded-2xl bg-cream-100 flex items-center justify-center overflow-hidden shrink-0">
+          {showImage ? (
+            <img
+              src={`https://static.arasaac.org/pictograms/${task.arasaacId}/${task.arasaacId}_300.png`}
+              alt=""
+              aria-hidden
+              className="max-h-full max-w-full object-contain"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <span className="text-2xl" aria-hidden>{task.emoji}</span>
+          )}
+        </div>
         <div className="flex-1 min-w-0">
           <div className="text-base font-bold text-ink-900 truncate">{task.label}</div>
-          {task.arasaacId !== null && (
-            <div className={`text-xs ${colorAccent} font-semibold`}>Piktogram</div>
-          )}
         </div>
       </button>
       <div className="flex flex-col gap-1">
