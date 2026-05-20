@@ -5,59 +5,70 @@
       <stop offset="55%" stop-color="#EC4899"/>
       <stop offset="100%" stop-color="#7C3AED"/>
     </linearGradient>
-    <mask id="ring-mask">
-      <rect width="512" height="512" fill="black"/>
-      <circle cx="256" cy="296" r="168" fill="white"/>
-      <circle cx="256" cy="296" r="142" fill="black"/>
-    </mask>
   </defs>
 
-  <!-- Background -->
+  <!-- Background with rounded corners -->
   <rect width="512" height="512" rx="100" fill="url(#bg)"/>
 
-  <!-- Soft inner glow inside ring -->
-  <circle cx="256" cy="296" r="142" fill="white" fill-opacity="0.18"/>
+  <!-- Solid white circle, centered -->
+  <circle cx="256" cy="256" r="180" fill="white"/>
 
-  <!-- White ring (donut via mask) -->
-  <rect width="512" height="512" fill="white" mask="url(#ring-mask)"/>
-
-  <!-- Family silhouettes inside the ring -->
+  <!-- Family silhouettes -->
   <g fill="#1B1B2E">
-    <!-- Combined body blob so the family looks connected at the base -->
+    <!-- Adult A (left parent) -->
+    <circle cx="186" cy="200" r="30"/>
     <path d="
-      M 156 396
-      C 156 348 178 308 210 308
-      C 235 308 252 326 252 326
-      C 252 326 248 308 246 318
-      C 232 318 220 332 220 348
-      C 220 348 226 318 246 318
-      C 246 318 256 318 256 318
-      C 256 318 266 318 266 318
-      C 286 318 292 348 292 348
-      C 292 332 280 318 266 318
-      C 264 308 260 326 260 326
-      C 260 326 277 308 302 308
-      C 334 308 356 348 356 396
-      Z" fill-opacity="0"/>
+      M 140 290
+      C 140 256 160 236 186 236
+      C 212 236 232 256 232 290
+      L 242 388
+      Q 242 396 234 396
+      L 138 396
+      Q 130 396 130 388
+      Z"/>
+    <!-- Adult A arm draped on child 1 -->
+    <path d="M 220 296 Q 244 290 244 314 L 230 330 Q 224 312 214 308 Z"/>
 
-    <!-- Adult A: head + body -->
-    <circle cx="206" cy="262" r="26"/>
-    <path d="M 156 396 C 156 340 178 304 206 304 C 234 304 256 340 256 396 Z"/>
+    <!-- Adult B (right parent) -->
+    <circle cx="326" cy="200" r="30"/>
+    <path d="
+      M 280 290
+      C 280 256 300 236 326 236
+      C 352 236 372 256 372 290
+      L 374 388
+      Q 374 396 366 396
+      L 270 396
+      Q 262 396 262 388
+      Z"/>
+    <!-- Adult B arm draped on child 2 -->
+    <path d="M 292 296 Q 268 290 268 314 L 282 330 Q 288 312 298 308 Z"/>
 
-    <!-- Adult B: head + body -->
-    <circle cx="306" cy="262" r="26"/>
-    <path d="M 256 396 C 256 340 278 304 306 304 C 334 304 356 340 356 396 Z"/>
+    <!-- Child 1 (older, between adults) -->
+    <circle cx="232" cy="270" r="22"/>
+    <path d="
+      M 204 326
+      C 204 304 216 296 232 296
+      C 248 296 260 304 260 326
+      L 266 388
+      Q 266 396 258 396
+      L 206 396
+      Q 198 396 198 388
+      Z"/>
 
-    <!-- Child 1 (slightly in front, between adults) -->
-    <circle cx="236" cy="306" r="18"/>
-    <path d="M 210 396 C 210 358 222 336 236 336 C 250 336 262 358 262 396 Z"/>
-
-    <!-- Child 2 -->
-    <circle cx="276" cy="306" r="18"/>
-    <path d="M 250 396 C 250 358 262 336 276 336 C 290 336 302 358 302 396 Z"/>
+    <!-- Child 2 (smaller, between adults) -->
+    <circle cx="280" cy="284" r="18"/>
+    <path d="
+      M 256 338
+      C 256 320 266 312 280 312
+      C 294 312 304 320 304 338
+      L 308 388
+      Q 308 396 300 396
+      L 260 396
+      Q 252 396 252 388
+      Z"/>
   </g>
 
-  <!-- Checkmark badge (top-right of ring) -->
+  <!-- Checkmark badge -->
   <g>
     <circle cx="372" cy="168" r="72" fill="white"/>
     <circle cx="372" cy="168" r="60" fill="#16A34A"/>

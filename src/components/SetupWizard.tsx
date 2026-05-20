@@ -18,7 +18,7 @@ function defaultDeviceName(): string {
 }
 
 export function SetupWizard() {
-  const { setPin, addProfile, replaceScreen, cloudAvailable, enableSyncWithExisting, config, pushToast } = useApp();
+  const { setPin, addProfile, replaceScreen, cloudAvailable, enableSyncWithExisting, pushToast } = useApp();
   const [stage, setStage] = useState<Stage>("welcome");
 
   const [name, setName] = useState("");
@@ -53,12 +53,7 @@ export function SetupWizard() {
     try {
       await enableSyncWithExisting(code, defaultDeviceName(), "replace-local");
       pushToast("Tilsluttet familie");
-      // If the synced family had no PIN, force PIN setup before we hand off.
-      if (!config.pin) {
-        setStage("pin");
-      } else {
-        replaceScreen({ kind: "picker" });
-      }
+      replaceScreen({ kind: "picker" });
     } catch (e) {
       setJoinError(e instanceof Error ? e.message : "Kunne ikke tilslutte. Tjek koden.");
     } finally {
