@@ -76,7 +76,7 @@ export function RoutineEditor({ profileId, slot, weekday }: RoutineEditorProps) 
       </header>
 
       <div className="px-5 pb-3 overflow-x-auto -mx-1">
-        <div className="flex gap-2 px-1">
+        <div className="flex justify-center gap-2 px-1 min-w-max mx-auto">
           {WEEKDAYS.map((day) => {
             const active = day === weekday;
             const dayTaskCount = p.routines[slot][day].tasks.length;
@@ -96,7 +96,7 @@ export function RoutineEditor({ profileId, slot, weekday }: RoutineEditorProps) 
         </div>
       </div>
 
-      <main className="flex-1 px-5 py-3 flex flex-col gap-3 max-w-md mx-auto w-full">
+      <main className="flex-1 px-5 pt-3 pb-32 flex flex-col gap-3 max-w-md mx-auto w-full">
         <div className="flex items-center justify-between gap-3 px-1">
           <h2 className="text-lg font-bold text-ink-700">{WEEKDAY_LABELS[weekday].full}</h2>
           {tasks.length > 0 && (

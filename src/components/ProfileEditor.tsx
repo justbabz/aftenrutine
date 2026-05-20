@@ -62,7 +62,7 @@ export function ProfileEditor({ profileId }: ProfileEditorProps) {
         </div>
       </header>
 
-      <main className="flex-1 px-5 py-4 flex flex-col gap-6 max-w-md mx-auto w-full">
+      <main className="flex-1 px-5 pt-4 pb-32 flex flex-col gap-6 max-w-md mx-auto w-full">
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-bold text-ink-700 px-1">Rutiner</h2>
           <RoutineRow

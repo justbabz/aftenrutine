@@ -110,7 +110,7 @@ export function TaskEditor({ profileId, slot, weekday, taskId }: TaskEditorProps
         </div>
       </header>
 
-      <main className="flex-1 px-5 py-4 flex flex-col gap-5 max-w-md mx-auto w-full overflow-y-auto">
+      <main className="flex-1 px-5 pt-4 pb-32 flex flex-col gap-5 max-w-md mx-auto w-full overflow-y-auto">
         <div className="bg-white rounded-3xl shadow-soft p-5 flex items-center gap-4">
           <div className="w-20 h-20 rounded-2xl bg-cream-100 flex items-center justify-center shrink-0 overflow-hidden">
             {arasaacId !== null && !arasaacError ? (

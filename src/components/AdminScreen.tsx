@@ -31,7 +31,7 @@ export function AdminScreen() {
         </button>
       </header>
 
-      <main className="flex-1 px-5 py-4 flex flex-col gap-6 max-w-md mx-auto w-full">
+      <main className="flex-1 px-5 pt-4 pb-32 flex flex-col gap-6 max-w-md mx-auto w-full">
         <section className="flex flex-col gap-3">
           <h2 className="text-lg font-bold text-ink-700 px-1">Børn</h2>
           {config.profiles.length === 0 && (
@@ -196,7 +196,7 @@ function AddProfileFlow({
         <h1 className="text-2xl font-black text-ink-900">Nyt barn</h1>
       </header>
 
-      <main className="flex-1 px-5 py-4 flex flex-col gap-6 max-w-md mx-auto w-full">
+      <main className="flex-1 px-5 pt-4 pb-32 flex flex-col gap-6 max-w-md mx-auto w-full">
         <label className="flex flex-col gap-2">
           <span className="text-sm font-semibold text-ink-700 px-1">Navn</span>
           <input
