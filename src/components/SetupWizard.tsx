@@ -59,8 +59,8 @@ export function SetupWizard() {
           <div className="flex flex-col items-center text-center gap-6 animate-fade-up">
             <div className="text-7xl animate-bounce2">🌙</div>
             <h1 className="text-4xl font-black text-ink-900 leading-tight">Velkommen til Familierutine</h1>
-            <p className="text-ink-500 text-lg max-w-xs">
-              En blid hjælper til morgen- og aftenrutiner. Lad os sætte det op sammen.
+            <p className="text-ink-500 text-lg max-w-sm">
+              En blid hjælper til morgen- og aftenrutiner for dig og dine små børn. Lad os sætte det op sammen.
             </p>
             <button
               onClick={handleStart}
