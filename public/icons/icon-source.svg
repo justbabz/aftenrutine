@@ -7,73 +7,45 @@
     </linearGradient>
   </defs>
 
-  <!-- Background with rounded corners -->
+  <!-- Background -->
   <rect width="512" height="512" rx="100" fill="url(#bg)"/>
 
-  <!-- Solid white circle, centered -->
-  <circle cx="256" cy="256" r="180" fill="white"/>
+  <!-- Two rotating arrow arcs around the center, suggesting day/night cycle -->
+  <g fill="none" stroke="white" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Top arc: from upper-right curving counterclockwise through top to upper-left, ending pointing at sun -->
+    <path d="M 360 96 A 200 200 0 0 0 96 360"/>
+    <!-- Arrowhead at lower-left end, pointing into the sun -->
+    <path d="M 70 332 L 96 360 L 124 334"/>
 
-  <!-- Family silhouettes -->
-  <g fill="#1B1B2E">
-    <!-- Adult A (left parent) -->
-    <circle cx="186" cy="200" r="30"/>
-    <path d="
-      M 140 290
-      C 140 256 160 236 186 236
-      C 212 236 232 256 232 290
-      L 242 388
-      Q 242 396 234 396
-      L 138 396
-      Q 130 396 130 388
-      Z"/>
-    <!-- Adult A arm draped on child 1 -->
-    <path d="M 220 296 Q 244 290 244 314 L 230 330 Q 224 312 214 308 Z"/>
-
-    <!-- Adult B (right parent) -->
-    <circle cx="326" cy="200" r="30"/>
-    <path d="
-      M 280 290
-      C 280 256 300 236 326 236
-      C 352 236 372 256 372 290
-      L 374 388
-      Q 374 396 366 396
-      L 270 396
-      Q 262 396 262 388
-      Z"/>
-    <!-- Adult B arm draped on child 2 -->
-    <path d="M 292 296 Q 268 290 268 314 L 282 330 Q 288 312 298 308 Z"/>
-
-    <!-- Child 1 (older, between adults) -->
-    <circle cx="232" cy="270" r="22"/>
-    <path d="
-      M 204 326
-      C 204 304 216 296 232 296
-      C 248 296 260 304 260 326
-      L 266 388
-      Q 266 396 258 396
-      L 206 396
-      Q 198 396 198 388
-      Z"/>
-
-    <!-- Child 2 (smaller, between adults) -->
-    <circle cx="280" cy="284" r="18"/>
-    <path d="
-      M 256 338
-      C 256 320 266 312 280 312
-      C 294 312 304 320 304 338
-      L 308 388
-      Q 308 396 300 396
-      L 260 396
-      Q 252 396 252 388
-      Z"/>
+    <!-- Bottom arc: from lower-left curving counterclockwise through bottom to lower-right, ending pointing at moon -->
+    <path d="M 152 416 A 200 200 0 0 0 416 152"/>
+    <!-- Arrowhead at upper-right end, pointing into the moon -->
+    <path d="M 442 180 L 416 152 L 388 178"/>
   </g>
 
-  <!-- Checkmark badge -->
-  <g>
-    <circle cx="372" cy="168" r="72" fill="white"/>
-    <circle cx="372" cy="168" r="60" fill="#16A34A"/>
-    <path d="M 340 172 L 364 196 L 408 142"
-          stroke="white" stroke-width="20"
-          fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Sun (bottom-left, in the path of the arrowhead) -->
+  <g transform="translate(68, 412)">
+    <!-- Rays -->
+    <g stroke="#FBBF24" stroke-width="7" stroke-linecap="round">
+      <line x1="0" y1="-44" x2="0" y2="-60"/>
+      <line x1="31" y1="-31" x2="42" y2="-42"/>
+      <line x1="44" y1="0" x2="60" y2="0"/>
+      <line x1="31" y1="31" x2="42" y2="42"/>
+      <line x1="-31" y1="-31" x2="-42" y2="-42"/>
+      <line x1="-44" y1="0" x2="-60" y2="0"/>
+      <line x1="-31" y1="31" x2="-42" y2="42"/>
+    </g>
+    <circle r="28" fill="#FCD34D"/>
   </g>
+
+  <!-- Moon (top-right, in the path of the arrowhead) -->
+  <g transform="translate(444, 68)">
+    <path d="M -4 -36 a 36 36 0 1 0 0 72 a 28 28 0 1 1 0 -72 z" fill="#FEF3C7"/>
+  </g>
+
+  <!-- Central white circle with green checkmark -->
+  <circle cx="256" cy="256" r="118" fill="white"/>
+  <path d="M 198 258 L 240 300 L 320 218"
+        stroke="#16A34A" stroke-width="34"
+        fill="none" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

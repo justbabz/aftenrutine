@@ -15,51 +15,52 @@ export function AdminScreen() {
 
   return (
     <div className="min-h-dvh bg-cream-50 flex flex-col pt-safe pb-safe">
-      <header className="px-5 pt-4 pb-3 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-black text-ink-900 leading-tight">Forælder-indstillinger</h1>
-          <p className="text-ink-500 text-sm mt-1">Tilføj børn og rediger deres rutiner</p>
+      <main className="flex-1 flex flex-col items-center justify-center px-5 py-10 w-full">
+        <div className="flex flex-col gap-6 max-w-md w-full">
+          <header className="text-center">
+            <h1 className="text-3xl font-black text-ink-900 leading-tight">Forælder-indstillinger</h1>
+            <p className="text-ink-500 text-sm mt-1">Tilføj børn og rediger deres rutiner</p>
+          </header>
+
+          <section className="flex flex-col gap-3">
+            <h2 className="text-lg font-bold text-ink-700 px-1">Børn</h2>
+            {config.profiles.length === 0 && (
+              <div className="bg-white rounded-3xl shadow-soft p-6 text-center">
+                <div className="text-4xl mb-2">👶</div>
+                <p className="text-ink-500 mb-3">Ingen børn endnu</p>
+              </div>
+            )}
+            {config.profiles.map((p) => (
+              <ProfileRow key={p.id} profile={p} onEdit={() => goto({ kind: "admin-profile", profileId: p.id })} />
+            ))}
+            {config.profiles.length < 6 && (
+              <button
+                onClick={() => setAdding(true)}
+                className="bg-white border-2 border-dashed border-ink-200 text-ink-700 rounded-3xl py-5 px-5 font-bold text-base active:bg-cream-100 transition-colors"
+              >
+                + Tilføj barn
+              </button>
+            )}
+          </section>
+
+          <section className="flex flex-col gap-2">
+            <h2 className="text-lg font-bold text-ink-700 px-1">App</h2>
+            <CloudSyncRow />
+            <ChangePinRow />
+            <DangerZone />
+          </section>
+
+          <button
+            onClick={() => { lockAdmin(); pushToast("Forælder-mode låst"); }}
+            className="mt-4 bg-ink-900 text-white font-bold text-base py-4 rounded-3xl shadow-soft active:scale-95 transition-transform flex items-center justify-center gap-3"
+          >
+            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Lås og luk forælder-mode
+          </button>
         </div>
-        <button
-          onClick={() => { lockAdmin(); pushToast("Lukket administration"); }}
-          aria-label="Lås og luk"
-          className="w-12 h-12 rounded-full bg-white shadow-soft flex items-center justify-center active:scale-95 text-ink-700"
-        >
-          <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" />
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-          </svg>
-        </button>
-      </header>
-
-      <main className="flex-1 px-5 pt-4 pb-32 flex flex-col gap-6 max-w-md mx-auto w-full">
-        <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-bold text-ink-700 px-1">Børn</h2>
-          {config.profiles.length === 0 && (
-            <div className="bg-white rounded-3xl shadow-soft p-6 text-center">
-              <div className="text-4xl mb-2">👶</div>
-              <p className="text-ink-500 mb-3">Ingen børn endnu</p>
-            </div>
-          )}
-          {config.profiles.map((p) => (
-            <ProfileRow key={p.id} profile={p} onEdit={() => goto({ kind: "admin-profile", profileId: p.id })} />
-          ))}
-          {config.profiles.length < 6 && (
-            <button
-              onClick={() => setAdding(true)}
-              className="bg-white border-2 border-dashed border-ink-200 text-ink-700 rounded-3xl py-5 px-5 font-bold text-base active:bg-cream-100 transition-colors"
-            >
-              + Tilføj barn
-            </button>
-          )}
-        </section>
-
-        <section className="flex flex-col gap-2">
-          <h2 className="text-lg font-bold text-ink-700 px-1">App</h2>
-          <CloudSyncRow />
-          <ChangePinRow />
-          <DangerZone />
-        </section>
       </main>
     </div>
   );
