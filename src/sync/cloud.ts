@@ -9,7 +9,7 @@ const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | un
 export const cloudConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 let client: SupabaseClient | null = null;
-function getClient(): SupabaseClient {
+export function getClient(): SupabaseClient {
   if (!client) {
     if (!cloudConfigured) throw new Error("Cloud sync not configured");
     client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -115,35 +115,23 @@ export interface FamilyRow {
 export async function fetchFamily(familyId: string): Promise<FamilyRow | null> {
   const supabase = getClient();
   const { data, error } = await supabase
-    .from("families")
-    .select("id, payload, updated_at")
-    .eq("id", familyId)
+    .rpc("get_family", { p_id: familyId })
     .maybeSingle();
   if (error) {
     if (error.code === "PGRST116") return null;
     throw error;
   }
   if (!data) return null;
-  return { id: data.id as string, payload: data.payload as SyncPayload, updatedAt: data.updated_at as string };
+  const row = data as { id: string; payload: SyncPayload; updated_at: string };
+  return { id: row.id, payload: row.payload, updatedAt: row.updated_at };
 }
 
 export async function pushFamily(familyId: string, payload: SyncPayload, deviceName: string): Promise<string> {
   const supabase = getClient();
   const { data, error } = await supabase
-    .from("families")
-    .upsert(
-      {
-        id: familyId,
-        payload,
-        last_device: deviceName,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "id" },
-    )
-    .select("updated_at")
-    .single();
+    .rpc("upsert_family", { p_id: familyId, p_payload: payload, p_device: deviceName });
   if (error) throw error;
-  return data.updated_at as string;
+  return data as string;
 }
 
 export interface SubscriptionHandle {
@@ -158,11 +146,12 @@ export function subscribeFamily(
   const channel = supabase
     .channel(`family:${familyId}`)
     .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "families", filter: `id=eq.${familyId}` },
-      (payload) => {
-        const next = payload.new as { id: string; payload: SyncPayload; updated_at: string } | null;
-        if (next) onChange({ id: next.id, payload: next.payload, updatedAt: next.updated_at });
+      "broadcast",
+      { event: "family_update" },
+      (msg) => {
+        const next = (msg.payload ?? {}) as { id?: string; payload?: SyncPayload; updated_at?: string };
+        if (!next.id || !next.payload || !next.updated_at) return;
+        onChange({ id: next.id, payload: next.payload, updatedAt: next.updated_at });
       },
     )
     .subscribe();
